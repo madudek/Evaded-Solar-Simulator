@@ -50,6 +50,7 @@ input[type=checkbox]{accent-color:var(--amber);width:14px;height:14px;cursor:poi
 .seg button{border:none;border-radius:0;padding:6px 11px;background:var(--panel);}
 .seg button.on{background:var(--panel2);}
 .scene{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:4px 0 4px;display:block;width:100%;}
+.sceneWrap{margin:0 auto;max-width:min(100%,max(440px,calc((100vh - 330px)*1.26)));}
 .chartleg{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);padding:2px 4px 0;}
 .chartleg i{display:inline-block;width:16px;height:3px;vertical-align:middle;border-radius:2px;margin-right:6px;}
 .status{font-family:var(--mono);font-size:12px;color:var(--muted);min-height:18px;margin:0 0 12px;padding-left:2px;}
@@ -144,11 +145,13 @@ footer{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:28px;b
     <span class="sub" id="dayLen"></span>
   </div>
 
+  <div class="sceneWrap">
   <svg class="scene" viewBox="0 0 680 540" role="img">
     <title>Van solar array isometric view with daily output curve</title>
     <desc>Isometric render of the van and tracking wings over a faint background chart of estimated output through the day for tracking, awning, and stowed modes, with the expected daily peak shown in the open sky area and a live time marker.</desc>
     <g id="cg"></g><g id="cm"></g><g id="g"></g>
   </svg>
+  </div>
   <div class="chartleg">
     <span><i style="background:#f2a121;"></i>Tracking</span>
     <span><i style="background:#3d8fd6;"></i>Awning / flat</span>
@@ -305,7 +308,7 @@ function modeP(T,m){
  return powerCalc(s,0,0,0,0,0);
 }
 function daily(m){let e=0;for(let T=4;T<=20;T+=0.1)e+=modeP(T,m)*0.1;return e/1000;}
-function fmtT(T){const hh=Math.floor(T),mm=Math.round((T-hh)*60);return hh+':'+(mm<10?'0':'')+mm;}
+function fmtT(T){let hh=Math.floor(T),mm=Math.round((T-hh)*60);if(mm===60){hh++;mm=0;}return hh+':'+(mm<10?'0':'')+mm;}
 const PTS=['N','NE','E','SE','S','SW','W','NW'];
 function compass(e,n){let a=Math.atan2(e,n)/D2R; if(a<0)a+=360; return PTS[Math.round(a/45)%8];}
 
