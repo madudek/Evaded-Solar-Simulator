@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaded Solar Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Saira:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117; --panel:#141b24; --panel2:#1a2330; --line:#26303d;
+  --text:#dce3ec; --muted:#7d8a9a; --dim:#56636f;
+  --blue:#3d8fd6; --blue-d:#1d5a96; --blue-l:#7db8e8;
+  --amber:#f2a121; --green:#2dbd8a; --red:#e25555;
+  --mono:'IBM Plex Mono',monospace; --sans:'Saira',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;
+  background-image:linear-gradient(var(--line) 0.5px, transparent 0.5px),linear-gradient(90deg, var(--line) 0.5px, transparent 0.5px);
+  background-size:48px 48px;background-position:-1px -1px;}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 20px 56px;}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px;}
+h1{font-size:22px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;}
+h1 span{color:var(--amber);}
+.sub{font-family:var(--mono);font-size:12px;color:var(--muted);}
+.cols{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:18px;align-items:start;}
+@media (max-width:920px){.cols{grid-template-columns:1fr;}}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px;}
+button{font-family:var(--mono);font-size:12.5px;color:var(--text);background:var(--panel2);
+  border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer;letter-spacing:0.03em;}
+button:hover{border-color:var(--blue);color:var(--blue-l);}
+button:active{transform:scale(0.97);}
+button.on{border-color:var(--amber);color:var(--amber);}
+label{font-size:13px;color:var(--muted);}
+input[type=range]{appearance:none;-webkit-appearance:none;flex:1;min-width:120px;height:4px;background:var(--line);border-radius:2px;outline:none;}
+input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--amber);cursor:pointer;border:2px solid var(--bg);}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--amber);cursor:pointer;border:2px solid var(--bg);}
+input[type=text],input[type=number],select{font-family:var(--mono);font-size:12.5px;color:var(--text);background:var(--panel2);
+  border:1px solid var(--line);border-radius:6px;padding:7px 10px;outline:none;}
+input[type=text]:focus,input[type=number]:focus,select:focus{border-color:var(--blue);}
+input[type=number]{width:64px;padding:3px 6px;font-size:12px;}
+input.cnt{width:44px;}
+.tval{font-family:var(--mono);font-size:13px;font-weight:500;min-width:46px;text-align:right;color:var(--amber);}
+.toggles{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted);margin:0 0 6px;}
+.toggles b{font-weight:600;color:var(--text);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;}
+.toggles label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text);font-size:12.5px;}
+input[type=checkbox]{accent-color:var(--amber);width:14px;height:14px;cursor:pointer;}
+.seg{display:flex;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+.seg button{border:none;border-radius:0;padding:6px 11px;background:var(--panel);}
+.seg button.on{background:var(--panel2);}
+.scene{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:4px 0 4px;display:block;width:100%;}
+.chartleg{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);padding:2px 4px 0;}
+.chartleg i{display:inline-block;width:16px;height:3px;vertical-align:middle;border-radius:2px;margin-right:6px;}
+.status{font-family:var(--mono);font-size:12px;color:var(--muted);min-height:18px;margin:0 0 12px;padding-left:2px;}
+.status::before{content:"// ";color:var(--dim);}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
+.card .lbl{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px;}
+.card .lbl b{color:var(--amber);font-weight:500;}
+.arow{padding:8px 0;}
+.arow + .arow{border-top:1px solid var(--line);}
+.arow .top{display:flex;justify-content:space-between;align-items:baseline;}
+.arow .nm{font-size:13px;color:var(--text);}
+.arow .val{font-family:var(--mono);font-size:20px;font-weight:600;}
+.arow .val small{font-size:11px;font-weight:400;color:var(--muted);margin-left:3px;}
+.arow .mid{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:2px 0 6px;}
+.arow .mid b{color:var(--text);font-family:var(--mono);font-weight:500;}
+.track{height:5px;background:var(--line);border-radius:3px;overflow:hidden;}
+.fill{height:5px;width:0%;background:var(--green);border-radius:3px;transition:background 0.3s;}
+.orow{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;gap:8px;}
+.orow + .orow{border-top:1px solid var(--line);}
+.orow .nm{font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px;min-width:0;}
+.orow .nm i{display:inline-block;width:12px;height:3px;border-radius:2px;flex:none;}
+.orow .w{font-family:var(--mono);font-size:17px;font-weight:600;white-space:nowrap;}
+.orow .w small{font-size:11px;font-weight:400;color:var(--muted);}
+.orow .e{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap;}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:26px;}
+caption{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);text-align:left;padding-bottom:8px;}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);}
+th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:500;}
+td{font-family:var(--mono);font-size:12px;color:var(--text);}
+footer{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:28px;border-top:1px solid var(--line);padding-top:12px;}
+@media (max-width:560px){h1{font-size:18px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Evaded <span>Solar</span> Simulator</h1>
+  <span class="sub">v12 &mdash; tracking / awning / stow &middot; any site &middot; any heading &middot; 7 strings &middot; <span id="totW">7,700</span> W</span>
+</header>
+
+<div class="cols">
+<div>
+  <div class="bar">
+    <button id="bDep">&#9650; Track</button>
+    <button id="bAwn">&#9644; Awning</button>
+    <button id="bStw">&#9660; Stow</button>
+    <button id="bDay">&#9654; Run day</button>
+    <label>Time</label>
+    <input type="range" id="T" min="4" max="20" step="0.1" value="9">
+    <span class="tval" id="Tv">9:00</span>
+  </div>
+
+  <div class="toggles">
+    <b>Site</b>
+    <input type="text" id="locQ" placeholder="city, zip, or lat,lon" style="min-width:170px;flex:1;">
+    <button id="bLoc">Set</button>
+    <span class="sub" id="locLbl">Salt Lake City &middot; 40.76&deg;N</span>
+  </div>
+
+  <div class="toggles">
+    <b>Nose facing</b>
+    <select id="hdg">
+      <option value="0" selected>N</option><option value="45">NE</option>
+      <option value="90">E</option><option value="135">SE</option>
+      <option value="180">S</option><option value="225">SW</option>
+      <option value="270">W</option><option value="315">NW</option>
+    </select>
+    <span class="sub" id="faceLbl">driver wing faces W &middot; passenger faces E</span>
+  </div>
+
+  <div class="toggles">
+    <b>Panels</b>
+    <label>Roof <input type="number" class="cnt" id="cntR" value="4" min="1" max="8" step="1"> &times; <input type="number" id="watR" value="550" min="50" max="800" step="5"> W</label>
+    <label>Driver <input type="number" class="cnt" id="cntD" value="3" min="1" max="8" step="1"> &times; <input type="number" id="watD" value="440" min="50" max="800" step="5"> W</label>
+    <label>Pass. <input type="number" class="cnt" id="cntP" value="3" min="1" max="8" step="1"> &times; <input type="number" id="watP" value="440" min="50" max="800" step="5"> W</label>
+  </div>
+
+  <div class="toggles">
+    <b>Slide-outs</b>
+    <label><input type="checkbox" id="cR"> Roof</label>
+    <label><input type="checkbox" id="cD"> Driver wing</label>
+    <label><input type="checkbox" id="cP"> Passenger wing</label>
+  </div>
+
+  <div class="toggles">
+    <b>Season</b>
+    <span class="seg">
+      <button id="seW">Winter</button>
+      <button id="seE">Equinox</button>
+      <button id="seS" class="on">Summer</button>
+    </span>
+    <span class="sub" id="dayLen"></span>
+  </div>
+
+  <svg class="scene" viewBox="0 0 680 540" role="img">
+    <title>Van solar array isometric view with daily output curve</title>
+    <desc>Isometric render of the van and tracking wings over a faint background chart of estimated output through the day for tracking, awning, and stowed modes, with the expected daily peak shown in the open sky area and a live time marker.</desc>
+    <g id="cg"></g><g id="cm"></g><g id="g"></g>
+  </svg>
+  <div class="chartleg">
+    <span><i style="background:#f2a121;"></i>Tracking</span>
+    <span><i style="background:#3d8fd6;"></i>Awning / flat</span>
+    <span><i style="background:#7d8a9a;"></i>Stowed</span>
+    <span><i style="background:#f2a121;width:6px;height:6px;border-radius:50%;"></i>amber edge = slide-out panel</span>
+  </div>
+</div>
+
+<div>
+  <p class="status" id="st">Stowed &mdash; driving configuration.</p>
+
+  <div class="card">
+    <p class="lbl">Actuator loads <b>&middot; FA-BH50 500 lb &times;2 per wing</b></p>
+    <div class="arow">
+      <div class="top"><span class="nm" id="nmD">Driver wing (W)</span><span class="val"><span id="lD">0</span><small>lb/act</small></span></div>
+      <div class="mid"><span>Angle <b id="aD">0&deg;</b></span><span>Wt <input type="number" id="wD" value="200" min="50" max="600" step="5"> lb</span><span id="sD">slides in</span><span><span id="pD">0</span>% rating</span></div>
+      <div class="track"><div class="fill" id="bD"></div></div>
+    </div>
+    <div class="arow">
+      <div class="top"><span class="nm" id="nmP">Passenger wing (E)</span><span class="val"><span id="lP">0</span><small>lb/act</small></span></div>
+      <div class="mid"><span>Angle <b id="aP">0&deg;</b></span><span>Wt <input type="number" id="wP" value="200" min="50" max="600" step="5"> lb</span><span id="sP">slides in</span><span><span id="pP">0</span>% rating</span></div>
+      <div class="track"><div class="fill" id="bP"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="lbl">Output @ <b id="Tv2">9:00</b> solar &middot; kWh/day</p>
+    <div class="orow">
+      <span class="nm"><i style="background:#f2a121;"></i>Tracking</span>
+      <span class="w"><span id="m1w">0</span><small> W</small></span>
+      <span class="e"><span id="m1e">0</span> kWh</span>
+    </div>
+    <div class="orow">
+      <span class="nm"><i style="background:#3d8fd6;"></i>Awning / flat</span>
+      <span class="w"><span id="m2w">0</span><small> W</small></span>
+      <span class="e"><span id="m2e">0</span> kWh</span>
+    </div>
+    <div class="orow">
+      <span class="nm"><i style="background:#7d8a9a;"></i>Stowed</span>
+      <span class="w"><span id="m3w">0</span><small> W</small></span>
+      <span class="e"><span id="m3e">0</span> kWh</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="lbl">Notes</p>
+    <p style="font-size:12.5px;color:var(--muted);line-height:1.55;">Panel counts and per-panel wattage are set per surface in the Panels controls; each surface keeps 2 slide-out panels at that surface's per-panel wattage. Tracking includes the out-of-plane cosine loss along the van's axis &mdash; try nose E or W and watch the tracking advantage collapse. City and zip lookup needs internet; offline, enter coordinates as <span style="color:var(--text);">lat, lon</span>. Times are solar; fore/aft slides don't change actuator load &mdash; cantilever goes to end hinges and slide rails.</p>
+  </div>
+</div>
+</div>
+
+<table>
+  <caption>System configuration (defaults &mdash; live values set in the Panels controls)</caption>
+  <tr><th>Surface</th><th>Panels</th><th>Orientation / motion</th><th>String</th><th>Rated</th></tr>
+  <tr><td>Roof fixed</td><td>4&times; LONGi 550</td><td>Across roof, fixed flat</td><td>2&times; 2s</td><td>2,200 W</td></tr>
+  <tr><td>Roof slide-outs</td><td>2&times; LONGi 550</td><td>Fore / aft along van, front over cab</td><td>1&times; 2s</td><td>1,100 W</td></tr>
+  <tr><td>Wing fixed (each)</td><td>3&times; AIKO 440 portrait</td><td>Parallel row, hinged at roofline, 15&ndash;165&deg; tracking or 90&deg; awning lock</td><td>1&times; 3s</td><td>1,320 W</td></tr>
+  <tr><td>Wing slide-outs (each)</td><td>2&times; AIKO 440 portrait</td><td>Fore / aft along hinge line, same row &mdash; span 133.8&Prime; &rarr; 223&Prime;</td><td>1&times; 2s</td><td>880 W</td></tr>
+  <tr><td><b>Total</b></td><td>14 panels</td><td>Noon plane &approx; 218.8&Prime; W &times; 287&Prime; L</td><td>7 strings</td><td>7,700 W</td></tr>
+</table>
+
+<footer>Evaded Solar Simulator. Sun model: site latitude, declination &plusmn;23.44&deg; by season, solar time, full azimuth geometry projected onto the wing cross-plane for any van heading. Load model: T = W&middot;r<sub>cg</sub>&middot;sin&theta;, per-wing weight user-set (default 200 lb) @ r = 34.7&Prime;, 2 actuators @ 24&Prime; effective arm &rarr; 145 lb peak at 200 lb. Interlock: wings deploy before slides extend; slides retract before wings fold. Output assumes clear sky, 0.85 system derate.</footer>
+</div>
+
+<script>
+const D2R=Math.PI/180;
+let LATv=40.76*D2R, locName='Salt Lake City', hdg=0;
+const cfg={nR:4,pR:550,nD:3,pD:440,nP:3,pP:440};
+const HZ=108, COLW=44.6, DEP=69.4;
+const RFW=44.5;
+const CI=Math.cos(Math.PI/6), SN=0.5, ZK=0.9, OX=185, OY=300;
+function P(x,y,z){return [+(OX+(x-y)*CI).toFixed(1), +(OY+(x+y)*SN-z*ZK).toFixed(1)];}
+function poly(pts,f,op,s,sw,da){return '<polygon points="'+pts.map(p=>p.join(',')).join(' ')+'" fill="'+f+'" fill-opacity="'+op+'" stroke="'+s+'" stroke-width="'+(sw||0.8)+'"'+(da?' stroke-dasharray="'+da+'"':'')+'/>';}
+function rq(xa,xb,ya,yb,z){return [P(xa,ya,z),P(xb,ya,z),P(xb,yb,z),P(xa,yb,z)];}
+function wpt(sgn,t,x,d,o){const st=Math.sin(t*D2R),ct=Math.cos(t*D2R),yh=sgn>0?80:0;
+ return P(x, yh+sgn*(d*st+ct*o), HZ-d*ct+st*o);}
+function wq(sgn,t,xa,xb,da,db,o){return [wpt(sgn,t,xa,da,o),wpt(sgn,t,xb,da,o),wpt(sgn,t,xb,db,o),wpt(sgn,t,xa,db,o)];}
+
+const PNL='#3d8fd6', PNL2='#1d5a96', AMB='#f2a121', BODY='#7d8a9a';
+function vanBody(){
+ let s='';
+ s+=poly([P(62,80,20),P(240,80,20),P(240,80,108),P(62,80,108)],BODY,0.10,BODY,0.6);
+ s+=poly([P(240,0,20),P(240,80,20),P(240,80,108),P(240,0,108)],BODY,0.12,BODY,0.6);
+ s+=poly([P(62,0,20),P(240,0,20),P(240,0,108),P(62,0,108)],BODY,0.06,BODY,0.5,'3 3');
+ s+=poly(rq(62,240,0,80,108),BODY,0.05,BODY,0.6);
+ s+=poly([P(2,80,20),P(62,80,20),P(62,80,84),P(14,80,84)],BODY,0.10,BODY,0.6);
+ s+=poly(rq(14,62,0,80,84),BODY,0.06,BODY,0.6);
+ s+=poly([P(2,0,20),P(2,80,20),P(14,80,84),P(14,0,84)],BODY,0.08,BODY,0.5);
+ const w=(x)=>{const c=P(x,80,14);return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="13" fill="'+BODY+'" fill-opacity="0.5"/>';};
+ s+=w(42)+w(205);
+ return s;
+}
+const VAN=vanBody();
+
+function wingSVG(sgn,t,sl,n){
+ let s='';
+ const nn=Math.min(8,Math.max(1,n)), WB=133.8/nn, x0=84.1;
+ const f=x0-WB*sl, r=x0+133.8-WB+WB*sl;
+ s+=poly(wq(sgn,t,f+0.8,f+WB-0.8,0.8,DEP-0.8,-2),PNL2,0.55+0.35*sl,AMB,1.8);
+ s+=poly(wq(sgn,t,r+0.8,r+WB-0.8,0.8,DEP-0.8,-2),PNL2,0.55+0.35*sl,AMB,1.8);
+ for(let i=0;i<nn;i++){const x=x0+i*WB;
+  s+=poly(wq(sgn,t,x+0.8,x+WB-0.8,0.8,DEP-0.8,0),PNL,0.9,'#7db8e8',0.8);}
+ return s;
+}
+function roofSVG(sr){
+ let s='';
+ const nn=Math.min(8,Math.max(1,cfg.nR)), RB=178/nn;
+ const f=62-RB*sr, r=240-RB+RB*sr;
+ s+=poly(rq(f,f+RB,2,78,109),PNL2,0.55+0.35*sr,AMB,1.8);
+ s+=poly(rq(r,r+RB,2,78,109),PNL2,0.55+0.35*sr,AMB,1.8);
+ for(let i=0;i<nn;i++){const x=62+i*RB;
+  s+=poly(rq(x+0.8,x+RB-0.8,1.5,78.5,110.5),PNL,0.9,'#7db8e8',0.8);}
+ return s;
+}
+function sunSVG(a,up){
+ if(!up)return '';
+ const sy0=40+260*Math.cos(a*D2R), sz=130+260*Math.sin(a*D2R);
+ const c=P(150,sy0,sz), m=P(150,40,112);
+ return '<line x1="'+c[0]+'" y1="'+c[1]+'" x2="'+m[0]+'" y2="'+m[1]+'" stroke="'+AMB+'" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.6"/><circle cx="'+c[0]+'" cy="'+c[1]+'" r="13" fill="'+AMB+'" fill-opacity="0.9"/>';
+}
+
+let dec=23.44*D2R;
+function sunPos(T){
+ const H=(T-12)*15*D2R;
+ const se=Math.sin(LATv)*Math.sin(dec)+Math.cos(LATv)*Math.cos(dec)*Math.cos(H);
+ const ce=Math.sqrt(Math.max(0,1-se*se));
+ let cosAz=(Math.sin(dec)-Math.sin(LATv)*se)/((Math.cos(LATv)*ce)||1e-9);
+ cosAz=Math.min(1,Math.max(-1,cosAz));
+ let az=Math.acos(cosAz); if(T>12)az=2*Math.PI-az;
+ const sE=ce*Math.sin(az), sN=ce*Math.cos(az);
+ const hv=hdg*D2R;
+ const Sr=sE*Math.cos(hv)-sN*Math.sin(hv);
+ let ad=Math.atan2(se,Sr)/D2R;
+ if(se<=0)ad=(Sr>=0?0:180); else if(ad<0)ad=0;
+ return {E:Sr,U:se,se:se,alpha:ad};
+}
+function dayBounds(){
+ const c=-Math.tan(LATv)*Math.tan(dec), H=Math.acos(Math.min(1,Math.max(-1,c)))/D2R/15;
+ return [12-H,12+H];
+}
+function powerCalc(s,tD,tP,sr,sd,sp){
+ if(s.se<=0)return 0;
+ const f=Math.pow(s.se,0.3)*0.85;
+ const roof=(cfg.nR*cfg.pR+2*cfg.pR*sr)*s.se;
+ const w=(sgn,t,sl,n,pw)=>{const ci=Math.max(0,sgn*Math.cos(t*D2R)*s.E+Math.sin(t*D2R)*s.U);return (n*pw+2*pw*sl)*ci;};
+ return (roof+w(-1,tD,sd,cfg.nD,cfg.pD)+w(1,tP,sp,cfg.nP,cfg.pP))*f;
+}
+let wD=200, wP=200;
+function load(t,w){return Math.sin(t*D2R)*(w*34.7)/48;}
+function modeP(T,m){
+ const s=sunPos(T);
+ if(m===0)return powerCalc(s,Math.min(165,Math.max(15,180-s.alpha)),Math.min(165,Math.max(15,s.alpha)),tog.roof?1:0,tog.d?1:0,tog.p?1:0);
+ if(m===1)return powerCalc(s,90,90,tog.roof?1:0,tog.d?1:0,tog.p?1:0);
+ return powerCalc(s,0,0,0,0,0);
+}
+function daily(m){let e=0;for(let T=4;T<=20;T+=0.1)e+=modeP(T,m)*0.1;return e/1000;}
+function fmtT(T){const hh=Math.floor(T),mm=Math.round((T-hh)*60);return hh+':'+(mm<10?'0':'')+mm;}
+const PTS=['N','NE','E','SE','S','SW','W','NW'];
+function compass(e,n){let a=Math.atan2(e,n)/D2R; if(a<0)a+=360; return PTS[Math.round(a/45)%8];}
+
+const Xc=T=>50+(T-4)*590/16;
+let chY=8000;
+const Yc=p=>505-p/chY*175;
+const COLS=['#f2a121','#3d8fd6','#7d8a9a'];
+function renderChart(){
+ let maxW=0, pkT=12; const SER=[[],[],[]];
+ for(let T=4;T<=20.0001;T+=0.1){
+  for(let m=0;m<3;m++){const p=modeP(T,m);SER[m].push([T,p]);
+   if(m===0&&p>maxW){maxW=p;pkT=T;}}}
+ chY=Math.max(1000,Math.ceil(maxW/1000)*1000);
+ let g='';
+ for(let i=0;i<=4;i++){const yv=chY*i/4,y=Yc(yv).toFixed(1);
+  g+='<line x1="50" y1="'+y+'" x2="640" y2="'+y+'" stroke="#1c2530" stroke-width="0.6"/>';
+  g+='<text x="44" y="'+(+y+4)+'" text-anchor="end" font-size="10" fill="#3f4a56" font-family="IBM Plex Mono,monospace">'+(yv>=1000?(yv/1000)+'k':yv)+'</text>';}
+ for(const h of [4,6,8,10,12,14,16,18,20]){const x=Xc(h).toFixed(1);
+  g+='<line x1="'+x+'" y1="330" x2="'+x+'" y2="505" stroke="#1c2530" stroke-width="0.4"/>';
+  g+='<text x="'+x+'" y="520" text-anchor="middle" font-size="10" fill="#3f4a56" font-family="IBM Plex Mono,monospace">'+h+':00</text>';}
+ for(let m=2;m>=0;m--){
+  g+='<polyline fill="none" stroke="'+COLS[m]+'" stroke-width="'+(m===0?1.8:1.2)+'" opacity="'+(m===0?0.8:0.5)+'" points="'+SER[m].map(p=>Xc(p[0]).toFixed(1)+','+Yc(p[1]).toFixed(1)).join(' ')+'"/>';}
+ const px=Xc(pkT).toFixed(1), py=Yc(maxW).toFixed(1);
+ g+='<circle cx="'+px+'" cy="'+py+'" r="4.5" fill="none" stroke="#f2a121" stroke-width="1.4"/>';
+ g+='<text x="22" y="30" font-size="13" font-weight="600" fill="#f2a121" font-family="IBM Plex Mono,monospace">peak '+Math.round(maxW).toLocaleString()+' W @ '+fmtT(pkT)+' solar</text>';
+ g+='<text x="22" y="48" font-size="11" fill="#56636f" font-family="IBM Plex Mono,monospace">'+locName+' \u00B7 '+Math.abs(LATv/D2R).toFixed(1)+'\u00B0'+(LATv>=0?'N':'S')+' \u00B7 nose '+PTS[Math.round(hdg/45)%8]+'</text>';
+ document.getElementById('cg').innerHTML=g;
+ const db=dayBounds(), dl=db[1]-db[0];
+ document.getElementById('dayLen').textContent='daylight '+dl.toFixed(1)+' h ('+fmtT(db[0])+' \u2013 '+fmtT(db[1])+' solar)';
+}
+
+let mode='stowed', wf=0, sf={roof:0,d:0,p:0}, tog={roof:false,d:false,p:false};
+let simT=9, last=null, dayRun=false;
+const $=id=>document.getElementById(id);
+function setModeBtns(){
+ $('bDep').classList.toggle('on',mode==='track');
+ $('bAwn').classList.toggle('on',mode==='awn');
+}
+
+function frame(ts){
+ const dt=last?Math.min(0.05,(ts-last)/1000):0.016; last=ts;
+ if(dayRun){simT+=dt*0.6; if(simT>=20){simT=20;dayRun=false;$('bDay').classList.remove('on');} $('T').value=simT;}
+ const T=simT, s=sunPos(T);
+ const slidesIn=sf.roof<0.02&&sf.d<0.02&&sf.p<0.02;
+ if(mode!=='stowed'){
+   wf=Math.min(1,wf+dt*0.55);
+   if(wf>0.98){for(const k of ['roof','d','p'])sf[k]+=((tog[k]?1:0)-sf[k]>0?1:-1)*Math.min(Math.abs((tog[k]?1:0)-sf[k]),dt*0.7);}
+ }else{
+   for(const k of ['roof','d','p'])sf[k]=Math.max(0,sf[k]-dt*0.7);
+   if(slidesIn)wf=Math.max(0,wf-dt*0.55);
+ }
+ const tTd=mode==='awn'?90:Math.min(165,Math.max(15,180-s.alpha));
+ const tTp=mode==='awn'?90:Math.min(165,Math.max(15,s.alpha));
+ const tD=wf*tTd, tP=wf*tTp;
+
+ let sv=sunSVG(s.alpha,s.se>0);
+ if(tD<=90)sv+='<g>'+wingSVG(-1,tD,sf.d,cfg.nD)+'</g>';
+ sv+=VAN+roofSVG(sf.roof);
+ if(tD>90)sv+='<g>'+wingSVG(-1,tD,sf.d,cfg.nD)+'</g>';
+ sv+='<g>'+wingSVG(1,tP,sf.p,cfg.nP)+'</g>';
+ $('g').innerHTML=sv;
+
+ const lD=load(tD,wD), lP=load(tP,wP);
+ $('lD').textContent=Math.round(lD); $('lP').textContent=Math.round(lP);
+ $('aD').textContent=Math.round(tD)+'\u00B0'; $('aP').textContent=Math.round(tP)+'\u00B0';
+ const pct=(l,b,p)=>{const v=Math.min(100,Math.round(l/5));$(p).textContent=v;
+  $(b).style.width=v+'%';$(b).style.background=v>85?'#e25555':(v>60?'#f2a121':'#2dbd8a');};
+ pct(lD,'bD','pD'); pct(lP,'bP','pP');
+ $('sD').textContent=sf.d>0.98?'slides out':(sf.d>0.02?'slides moving':'slides in');
+ $('sP').textContent=sf.p>0.98?'slides out':(sf.p>0.02?'slides moving':'slides in');
+
+ const tl=fmtT(T);
+ $('Tv').textContent=tl; $('Tv2').textContent=tl;
+ $('m1w').textContent=Math.round(modeP(T,0)).toLocaleString();
+ $('m2w').textContent=Math.round(modeP(T,1)).toLocaleString();
+ $('m3w').textContent=Math.round(modeP(T,2)).toLocaleString();
+
+ const mi=mode==='track'?0:(mode==='awn'?1:2);
+ const wNow=modeP(T,mi), mx=Xc(T).toFixed(1);
+ $('cm').innerHTML='<line x1="'+mx+'" y1="330" x2="'+mx+'" y2="505" stroke="#dce3ec" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.5"/>'+
+  (s.se>0?'<circle cx="'+mx+'" cy="'+Yc(wNow).toFixed(1)+'" r="4" fill="'+COLS[mi]+'" stroke="#0d1117" stroke-width="1.5"/>':'');
+
+ const elev=Math.asin(Math.max(-1,Math.min(1,s.se)))/D2R;
+ let st;
+ if(mode!=='stowed'&&wf<0.98)st='Deploying \u2014 wings rise before slides extend.';
+ else if(mode==='stowed'&&!slidesIn)st='Interlock \u2014 retracting slide-outs before wings fold.';
+ else if(mode==='stowed'&&wf>0.02)st='Folding wings to stow.';
+ else if(mode==='stowed')st='Stowed \u2014 driving configuration.';
+ else if(mode==='awn')st='Awning \u2014 wings locked flat (180\u00B0 plane with roof). No tracking duty cycle.';
+ else if(s.se<=0)st='Tracking \u2014 sun below horizon, wings parked at end stops.';
+ else st='Tracking \u2014 '+Math.round(tTd)+'\u00B0 / '+Math.round(tTp)+'\u00B0 \u00B7 sun elevation '+Math.round(elev)+'\u00B0.';
+ $('st').textContent=st;
+ requestAnimationFrame(frame);
+}
+
+function refreshEnergy(){
+ $('m1e').textContent=daily(0).toFixed(1);
+ $('m2e').textContent=daily(1).toFixed(1);
+ $('m3e').textContent=daily(2).toFixed(1);
+ $('totW').textContent=((cfg.nR+2)*cfg.pR+(cfg.nD+2)*cfg.pD+(cfg.nP+2)*cfg.pP).toLocaleString();
+ renderChart();
+}
+function setSeason(d,btn){
+ dec=d*D2R;
+ for(const id of ['seW','seE','seS'])$(id).classList.remove('on');
+ $(btn).classList.add('on');
+ refreshEnergy();
+}
+function applyLoc(lat,lon,name){
+ LATv=Math.max(-66,Math.min(66,lat))*D2R;
+ locName=name;
+ $('locLbl').textContent=name+' \u00B7 '+Math.abs(lat).toFixed(2)+'\u00B0'+(lat>=0?'N':'S');
+ refreshEnergy();
+}
+async function setLocation(){
+ const q=$('locQ').value.trim();
+ if(!q)return;
+ const m=q.match(/^(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)$/);
+ if(m){applyLoc(+m[1],+m[3],'custom site');return;}
+ $('locLbl').textContent='searching\u2026';
+ try{
+  const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&name='+encodeURIComponent(q));
+  const j=await r.json();
+  if(j.results&&j.results.length){
+   const g=j.results[0];
+   applyLoc(g.latitude,g.longitude,g.name+(g.admin1?', '+g.admin1:''));
+  }else $('locLbl').textContent='not found \u2014 try "lat, lon"';
+ }catch(e){$('locLbl').textContent='offline \u2014 enter "lat, lon"';}
+}
+function faceUpdate(){
+ const hv=hdg*D2R;
+ const dDir=compass(-Math.cos(hv),Math.sin(hv));
+ const pDir=compass(Math.cos(hv),-Math.sin(hv));
+ $('nmD').textContent='Driver wing ('+dDir+')';
+ $('nmP').textContent='Passenger wing ('+pDir+')';
+ $('faceLbl').textContent='driver wing faces '+dDir+' \u00B7 passenger faces '+pDir;
+}
+$('bDep').onclick=()=>{mode='track';setModeBtns();};
+$('bAwn').onclick=()=>{mode='awn';setModeBtns();};
+$('bStw').onclick=()=>{mode='stowed';dayRun=false;$('bDay').classList.remove('on');setModeBtns();};
+$('bDay').onclick=()=>{simT=4;$('T').value=4;dayRun=true;$('bDay').classList.add('on');if(mode==='stowed'){mode='track';setModeBtns();}};
+$('T').addEventListener('input',e=>{simT=+e.target.value;dayRun=false;$('bDay').classList.remove('on');});
+$('cR').onchange=e=>{tog.roof=e.target.checked;refreshEnergy();};
+$('cD').onchange=e=>{tog.d=e.target.checked;refreshEnergy();};
+$('cP').onchange=e=>{tog.p=e.target.checked;refreshEnergy();};
+$('seW').onclick=()=>setSeason(-23.44,'seW');
+$('seE').onclick=()=>setSeason(0,'seE');
+$('seS').onclick=()=>setSeason(23.44,'seS');
+$('bLoc').onclick=setLocation;
+$('locQ').addEventListener('keydown',e=>{if(e.key==='Enter')setLocation();});
+$('hdg').onchange=e=>{hdg=+e.target.value;faceUpdate();refreshEnergy();};
+$('wD').oninput=e=>{wD=Math.max(0,+e.target.value||0);};
+$('wP').oninput=e=>{wP=Math.max(0,+e.target.value||0);};
+function cfgIn(id,key,lo,hi){$(id).oninput=e=>{cfg[key]=Math.min(hi,Math.max(lo,Math.round(+e.target.value||lo)));refreshEnergy();};}
+cfgIn('cntR','nR',1,8); cfgIn('watR','pR',10,1000);
+cfgIn('cntD','nD',1,8); cfgIn('watD','pD',10,1000);
+cfgIn('cntP','nP',1,8); cfgIn('watP','pP',10,1000);
+faceUpdate();
+refreshEnergy();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
