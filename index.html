@@ -19,12 +19,12 @@
 body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;
   background-image:linear-gradient(var(--line) 0.5px, transparent 0.5px),linear-gradient(90deg, var(--line) 0.5px, transparent 0.5px);
   background-size:48px 48px;background-position:-1px -1px;}
-.wrap{max-width:1240px;margin:0 auto;padding:28px 20px 56px;}
+.wrap{max-width:1520px;margin:0 auto;padding:28px 20px 56px;}
 header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px;}
 h1{font-size:22px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;}
 h1 span{color:var(--amber);}
 .sub{font-family:var(--mono);font-size:12px;color:var(--muted);}
-.cols{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:18px;align-items:start;}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;align-items:start;}
 @media (max-width:920px){.cols{grid-template-columns:1fr;}}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px;}
 button{font-family:var(--mono);font-size:12.5px;color:var(--text);background:var(--panel2);
@@ -50,13 +50,15 @@ input[type=checkbox]{accent-color:var(--amber);width:14px;height:14px;cursor:poi
 .seg button{border:none;border-radius:0;padding:6px 11px;background:var(--panel);}
 .seg button.on{background:var(--panel2);}
 .scene{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:4px 0 4px;display:block;width:100%;}
-.sceneWrap{margin:0 auto;max-width:min(100%,max(440px,calc((100vh - 330px)*1.26)));}
+.sceneWrap{margin:0 auto;max-width:min(100%,max(520px,calc((100vh - 230px)*1.26)));}
 .chartleg{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);padding:2px 4px 0;}
 .chartleg i{display:inline-block;width:16px;height:3px;vertical-align:middle;border-radius:2px;margin-right:6px;}
 .status{font-family:var(--mono);font-size:12px;color:var(--muted);min-height:18px;margin:0 0 12px;padding-left:2px;}
 .status::before{content:"// ";color:var(--dim);}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
 .card .lbl{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px;}
+.card .toggles{margin:0 0 12px;gap:10px;}
+.card .toggles:last-child{margin:0;}
 .card .lbl b{color:var(--amber);font-weight:500;}
 .arow{padding:8px 0;}
 .arow + .arow{border-top:1px solid var(--line);}
@@ -103,6 +105,26 @@ footer{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:28px;b
     <span class="tval" id="Tv">9:00</span>
   </div>
 
+  <div class="sceneWrap">
+  <svg class="scene" viewBox="0 0 680 540" role="img">
+    <title>Van solar array isometric view with daily output curve</title>
+    <desc>Isometric render of the van and tracking wings over a faint background chart of estimated output through the day for tracking, awning, and stowed modes, with the expected daily peak shown in the open sky area and a live time marker.</desc>
+    <g id="cg"></g><g id="cm"></g><g id="g"></g>
+  </svg>
+  </div>
+  <div class="chartleg">
+    <span><i style="background:#f2a121;"></i>Tracking</span>
+    <span><i style="background:#3d8fd6;"></i>Awning / flat</span>
+    <span><i style="background:#7d8a9a;"></i>Stowed</span>
+    <span><i style="background:#f2a121;width:6px;height:6px;border-radius:50%;"></i>amber edge = slide-out panel</span>
+  </div>
+</div>
+
+<div>
+  <p class="status" id="st">Stowed &mdash; driving configuration.</p>
+
+  <div class="card">
+    <p class="lbl">Setup</p>
   <div class="toggles">
     <b>Site</b>
     <input type="text" id="locQ" placeholder="city, zip, or lat,lon" style="min-width:170px;flex:1;">
@@ -144,24 +166,7 @@ footer{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:28px;b
     </span>
     <span class="sub" id="dayLen"></span>
   </div>
-
-  <div class="sceneWrap">
-  <svg class="scene" viewBox="0 0 680 540" role="img">
-    <title>Van solar array isometric view with daily output curve</title>
-    <desc>Isometric render of the van and tracking wings over a faint background chart of estimated output through the day for tracking, awning, and stowed modes, with the expected daily peak shown in the open sky area and a live time marker.</desc>
-    <g id="cg"></g><g id="cm"></g><g id="g"></g>
-  </svg>
   </div>
-  <div class="chartleg">
-    <span><i style="background:#f2a121;"></i>Tracking</span>
-    <span><i style="background:#3d8fd6;"></i>Awning / flat</span>
-    <span><i style="background:#7d8a9a;"></i>Stowed</span>
-    <span><i style="background:#f2a121;width:6px;height:6px;border-radius:50%;"></i>amber edge = slide-out panel</span>
-  </div>
-</div>
-
-<div>
-  <p class="status" id="st">Stowed &mdash; driving configuration.</p>
 
   <div class="card">
     <p class="lbl">Actuator loads <b>&middot; FA-BH50 500 lb &times;2 per wing</b></p>
