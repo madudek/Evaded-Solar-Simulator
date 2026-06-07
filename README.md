@@ -2,7 +2,7 @@
 
 Interactive simulator for a van-mounted, sun-tracking solar array with deployable wings and fore/aft slide-out panels. Built for the Evaded mobile solar platform.
 
-**Live demo:** https://YOUR-USERNAME.github.io/evaded-solar-simulator/
+**Live demo:** https://madudek.github.io/evaded-solar-simulator/
 
 ![Simulator screenshot](screenshot.png)
 
