@@ -162,6 +162,13 @@ body.wide #notesCard{margin-top:16px;}
   </div>
 
   <div class="toggles">
+    <b>Installed</b>
+    <label><input type="checkbox" id="hR" checked> Roof</label>
+    <label><input type="checkbox" id="hD" checked> Driver wing</label>
+    <label><input type="checkbox" id="hP" checked> Passenger wing</label>
+  </div>
+
+  <div class="toggles">
     <b>Panels</b>
     <label>Roof <input type="number" class="cnt" id="cntR" value="4" min="1" max="8" step="1"> &times; <input type="number" id="watR" value="550" min="50" max="800" step="5"> W</label>
     <label>Driver <input type="number" class="cnt" id="cntD" value="3" min="1" max="8" step="1"> &times; <input type="number" id="watD" value="440" min="50" max="800" step="5"> W</label>
@@ -173,6 +180,12 @@ body.wide #notesCard{margin-top:16px;}
     <label><input type="checkbox" id="cR"> Roof</label>
     <label><input type="checkbox" id="cD"> Driver wing</label>
     <label><input type="checkbox" id="cP"> Passenger wing</label>
+  </div>
+
+  <div class="toggles">
+    <b>Roof mode</b>
+    <label><input type="checkbox" id="rTrack"> Tracks sun (single-axis) &mdash; unchecked = flat</label>
+    <label><input type="checkbox" id="shToggle" checked> Account for self-shading</label>
   </div>
 
   <div class="toggles">
@@ -296,6 +309,7 @@ const CI=Math.cos(Math.PI/6), SN=0.5, ZK=0.9, OX=185, OY=300;
 function P(x,y,z){return [+(OX+(x-y)*CI).toFixed(1), +(OY+(x+y)*SN-z*ZK).toFixed(1)];}
 function poly(pts,f,op,s,sw,da){return '<polygon points="'+pts.map(p=>p.join(',')).join(' ')+'" fill="'+f+'" fill-opacity="'+op+'" stroke="'+s+'" stroke-width="'+(sw||0.8)+'"'+(da?' stroke-dasharray="'+da+'"':'')+'/>';}
 function rq(xa,xb,ya,yb,z){return [P(xa,ya,z),P(xb,ya,z),P(xb,yb,z),P(xa,yb,z)];}
+function rqz(xa,xb,ya,yb,za,zb){return [P(xa,ya,za),P(xb,ya,za),P(xb,yb,zb),P(xa,yb,zb)];}
 function wpt(sgn,t,x,d,o){const st=Math.sin(t*D2R),ct=Math.cos(t*D2R),yh=sgn>0?80:0;
  return P(x, yh+sgn*(d*st+ct*o), HZ-d*ct+st*o);}
 function wq(sgn,t,xa,xb,da,db,o){return [wpt(sgn,t,xa,da,o),wpt(sgn,t,xb,da,o),wpt(sgn,t,xb,db,o),wpt(sgn,t,xa,db,o)];}
@@ -316,24 +330,28 @@ function vanBody(){
 }
 const VAN=vanBody();
 
-function wingSVG(sgn,t,sl,n){
+function wingSVG(sgn,t,sl,n,dim){
+ const dm=dim==null?1:dim;
  let s='';
  const nn=Math.min(8,Math.max(1,n)), WB=133.8/nn, x0=84.1;
  const f=x0-WB*sl, r=x0+133.8-WB+WB*sl;
  s+=poly(wq(sgn,t,f+0.8,f+WB-0.8,0.8,DEP-0.8,-2),PNL2,0.55+0.35*sl,AMB,1.8);
  s+=poly(wq(sgn,t,r+0.8,r+WB-0.8,0.8,DEP-0.8,-2),PNL2,0.55+0.35*sl,AMB,1.8);
  for(let i=0;i<nn;i++){const x=x0+i*WB;
-  s+=poly(wq(sgn,t,x+0.8,x+WB-0.8,0.8,DEP-0.8,0),PNL,0.9,'#7db8e8',0.8);}
+  s+=poly(wq(sgn,t,x+0.8,x+WB-0.8,0.8,DEP-0.8,0),PNL,0.9*dm,'#7db8e8',0.8);}
  return s;
 }
-function roofSVG(sr){
+function roofSVG(sr,beta,dir,dim){
+ const dm=dim==null?1:dim;
  let s='';
  const nn=Math.min(8,Math.max(1,cfg.nR)), RB=178/nn;
  const f=62-RB*sr, r=240-RB+RB*sr;
- s+=poly(rq(f,f+RB,2,78,109),PNL2,0.55+0.35*sr,AMB,1.8);
- s+=poly(rq(r,r+RB,2,78,109),PNL2,0.55+0.35*sr,AMB,1.8);
+ const tb=Math.tan((beta||0)*D2R), d=dir>=0?1:-1;
+ const zf=y=>109+(d>=0?(78-y):(y-2))*tb;
+ s+=poly(rqz(f,f+RB,2,78,zf(2),zf(78)),PNL2,0.55+0.35*sr,AMB,1.8);
+ s+=poly(rqz(r,r+RB,2,78,zf(2),zf(78)),PNL2,0.55+0.35*sr,AMB,1.8);
  for(let i=0;i<nn;i++){const x=62+i*RB;
-  s+=poly(rq(x+0.8,x+RB-0.8,1.5,78.5,110.5),PNL,0.9,'#7db8e8',0.8);}
+  s+=poly(rqz(x+0.8,x+RB-0.8,1.5,78.5,zf(1.5),zf(78.5)),PNL,0.9*dm,'#7db8e8',0.8);}
  return s;
 }
 function sunSVG(sr,u,up,el){
@@ -362,12 +380,37 @@ function dayBounds(){
  const c=-Math.tan(LATv)*Math.tan(dec), H=Math.acos(Math.min(1,Math.max(-1,c)))/D2R/15;
  return [12-H,12+H];
 }
-function powerCalc(s,tD,tP,sr,sd,sp){
+function shadeFactors(s,tD,tP,rt){
+ const out={roof:1,d:1,p:1};
+ if(!shadeOn||s.se<=0)return out;
+ const mag=Math.hypot(s.E,s.U)||1, ux=s.E/mag, uz=s.U/mag, DEPv=69.4;
+ const segs=[];
+ if(have.roof){const beta=rt?Math.min(45,Math.abs(90-s.alpha)):0,d=(s.E>=0?1:-1),tb=Math.tan(beta*D2R);
+  segs.push({k:'roof',A:[2,109+(d>=0?76:0)*tb],B:[78,109+(d>=0?0:76)*tb]});}
+ if(have.d)segs.push({k:'d',A:[0,108],B:[-DEPv*Math.sin(tD*D2R),108-DEPv*Math.cos(tD*D2R)]});
+ if(have.p)segs.push({k:'p',A:[80,108],B:[80+DEPv*Math.sin(tP*D2R),108-DEPv*Math.cos(tP*D2R)]});
+ const N=14;
+ const blocked=(P,si)=>{
+  for(let j=0;j<segs.length;j++){if(j===si)continue;
+   const A=segs[j].A,B=segs[j].B,sx=B[0]-A[0],sz=B[1]-A[1];
+   const rxs=ux*sz-uz*sx; if(Math.abs(rxs)<1e-9)continue;
+   const apx=A[0]-P[0],apz=A[1]-P[1];
+   const l=(apx*sz-apz*sx)/rxs, mu=(apx*uz-apz*ux)/rxs;
+   if(l>0.01&&mu>=0&&mu<=1)return true;}
+  return false;};
+ for(let i=0;i<segs.length;i++){const A=segs[i].A,B=segs[i].B;let blk=0;
+  for(let n=0;n<N;n++){const fr=(n+0.5)/N,P=[A[0]+fr*(B[0]-A[0]),A[1]+fr*(B[1]-A[1])];if(blocked(P,i))blk++;}
+  out[segs[i].k]=1-blk/N;}
+ return out;
+}
+function powerCalc(s,tD,tP,sr,sd,sp,rt){
  if(s.se<=0)return 0;
  const f=Math.pow(s.se,0.3)*0.85;
- const roof=(cfg.nR*cfg.pR+2*cfg.pR*sr)*s.se;
- const w=(sgn,t,sl,n,pw)=>{const ci=Math.max(0,sgn*Math.cos(t*D2R)*s.E+Math.sin(t*D2R)*s.U);return (n*pw+2*pw*sl)*ci;};
- return (roof+w(-1,tD,sd,cfg.nD,cfg.pD)+w(1,tP,sp,cfg.nP,cfg.pP))*f;
+ const sh=shadeFactors(s,tD,tP,rt);
+ const rci=rt?Math.min(1,Math.sqrt(s.E*s.E+s.U*s.U)):s.se;
+ const roof=(cfg.nR*cfg.pR+2*cfg.pR*sr)*rci*(have.roof?1:0)*sh.roof;
+ const w=(sgn,t,sl,n,pw,on,shd)=>{if(!on)return 0;const ci=Math.max(0,sgn*Math.cos(t*D2R)*s.E+Math.sin(t*D2R)*s.U);return (n*pw+2*pw*sl)*ci*shd;};
+ return (roof+w(-1,tD,sd,cfg.nD,cfg.pD,have.d,sh.d)+w(1,tP,sp,cfg.nP,cfg.pP,have.p,sh.p))*f;
 }
 let wD=200, wP=200, armA=18.7, armB=64.4, aRet=46.6, aExt=82.6, rating=500, suggA=0, suggB=0, windV=0, windSel='1', liveDir=null;
 function Lact(t){return Math.sqrt(armA*armA+armB*armB-2*armA*armB*Math.cos(t*D2R));}
@@ -390,11 +433,11 @@ function loadW(t,w,sgn,A){
 function maxLoad(w,sgn,A,thTop){let mf=0,ma=15;
  for(let t=15;t<=thTop;t+=1){const r=loadW(t,w,sgn,A);if(r.f>mf){mf=r.f;ma=t;}}
  return {f:mf,a:ma};}
-function windLimit(tD,tP,AD,AP){
- if(tD<1&&tP<1)return 999;
+function windLimit(tD,tP,AD,AP,hd,hp){
+ if((!hd||tD<1)&&(!hp||tP<1))return 999;
  const sv=windV;let lim=999;
  for(let V=1;V<=120;V+=1){windV=V;
-  if(loadW(tD,wD,-1,AD).f>=rating||loadW(tP,wP,1,AP).f>=rating){lim=V;break;}}
+  if((hd&&loadW(tD,wD,-1,AD).f>=rating)||(hp&&loadW(tP,wP,1,AP).f>=rating)){lim=V;break;}}
  windV=sv;return lim;}
 function reachRng(){const S=armA*armA+armB*armB,P=2*armA*armB;
  const lo=Math.acos(Math.max(-1,Math.min(1,(S-aRet*aRet)/P)))/D2R;
@@ -414,9 +457,9 @@ function updateSugg(){
 }
 function modeP(T,m){
  const s=sunPos(T);
- if(m===0)return powerCalc(s,Math.min(165,Math.max(15,180-s.alpha)),Math.min(165,Math.max(15,s.alpha)),tog.roof?1:0,tog.d?1:0,tog.p?1:0);
- if(m===1)return powerCalc(s,90,90,tog.roof?1:0,tog.d?1:0,tog.p?1:0);
- return powerCalc(s,0,0,0,0,0);
+ if(m===0)return powerCalc(s,Math.min(165,Math.max(15,180-s.alpha)),Math.min(165,Math.max(15,s.alpha)),tog.roof?1:0,tog.d?1:0,tog.p?1:0,roofTrack);
+ if(m===1)return powerCalc(s,90,90,tog.roof?1:0,tog.d?1:0,tog.p?1:0,false);
+ return powerCalc(s,0,0,0,0,0,false);
 }
 function daily(m){let e=0;for(let T=4;T<=20;T+=0.1)e+=modeP(T,m)*0.1;return e/1000;}
 function fmtT(T){let hh=Math.floor(T),mm=Math.round((T-hh)*60);if(mm===60){hh++;mm=0;}return hh+':'+(mm<10?'0':'')+mm;}
@@ -451,6 +494,9 @@ function renderChart(){
 }
 
 let mode='stowed', wf=0, sf={roof:0,d:0,p:0}, tog={roof:false,d:false,p:false};
+let roofTrack=false;
+let have={roof:true,d:true,p:true};
+let shadeOn=true;
 let simT=9, last=null, dayRun=false;
 const $=id=>document.getElementById(id);
 function setModeBtns(){
@@ -474,15 +520,18 @@ function frame(ts){
  const tTp=mode==='awn'?90:Math.min(165,Math.max(15,s.alpha));
  const tD=wf*tTd, tP=wf*tTp;
 
+ const sh=s.se>0?shadeFactors(s,tD,tP,roofTrack&&mode==='track'):{roof:1,d:1,p:1};
  let sv=sunSVG(s.E,s.U,s.se>0,Math.asin(Math.max(-1,Math.min(1,s.se)))/D2R);
- if(tD<=90)sv+='<g>'+wingSVG(-1,tD,sf.d,cfg.nD)+'</g>';
- sv+=VAN+roofSVG(sf.roof);
- if(tD>90)sv+='<g>'+wingSVG(-1,tD,sf.d,cfg.nD)+'</g>';
- sv+='<g>'+wingSVG(1,tP,sf.p,cfg.nP)+'</g>';
+ if(have.d&&tD<=90)sv+='<g>'+wingSVG(-1,tD,sf.d,cfg.nD,sh.d)+'</g>';
+ let rB=0, rD=1;
+ if(roofTrack&&mode==='track'&&s.se>0){rB=Math.min(45,Math.abs(90-s.alpha))*wf; rD=s.E>=0?1:-1;}
+ sv+=VAN+(have.roof?roofSVG(sf.roof,rB,rD,sh.roof):'');
+ if(have.d&&tD>90)sv+='<g>'+wingSVG(-1,tD,sf.d,cfg.nD,sh.d)+'</g>';
+ if(have.p)sv+='<g>'+wingSVG(1,tP,sf.p,cfg.nP,sh.p)+'</g>';
  $('g').innerHTML=sv;
 
  const AD=wingArea(cfg.nD,sf.d), AP=wingArea(cfg.nP,sf.p);
- const rWD=wf<0.02?{f:0,ten:false}:loadW(tD,wD,-1,AD), rWP=wf<0.02?{f:0,ten:false}:loadW(tP,wP,1,AP);
+ const rWD=(!have.d||wf<0.02)?{f:0,ten:false}:loadW(tD,wD,-1,AD), rWP=(!have.p||wf<0.02)?{f:0,ten:false}:loadW(tP,wP,1,AP);
  const lD=rWD.f, lP=rWP.f;
  $('lD').textContent=Math.round(lD)+(rWD.ten?'*':''); $('lP').textContent=Math.round(lP)+(rWP.ten?'*':'');
  $('aD').textContent=Math.round(tD)+'\u00B0'; $('aP').textContent=Math.round(tP)+'\u00B0';
@@ -494,10 +543,10 @@ function frame(ts){
  rngEl.textContent=Math.round(rr[0])+'\u2013'+Math.round(rr[1])+'\u00B0';
  rngEl.style.color=rOk?'#2dbd8a':'#e25555';
  const thTop=Math.max(16,Math.min(165,rr[1]));
- const mD2=maxLoad(wD,-1,AD,thTop), mP2=maxLoad(wP,1,AP,thTop);
+ const mD2=have.d?maxLoad(wD,-1,AD,thTop):{f:0,a:0}, mP2=have.p?maxLoad(wP,1,AP,thTop):{f:0,a:0};
  $('mD').textContent=Math.round(mD2.f); $('maD').textContent=mD2.a; $('mpD').textContent=Math.round(mD2.f/rating*100);
  $('mP').textContent=Math.round(mP2.f); $('maP').textContent=mP2.a; $('mpP').textContent=Math.round(mP2.f/rating*100);
- const wl=windLimit(tD,tP,AD,AP), wEl=$('wLim');
+ const wl=windLimit(tD,tP,AD,AP,have.d,have.p), wEl=$('wLim');
  wEl.textContent=wl>120?'>120 mph':wl+' mph';
  wEl.style.color=wl<=25?'#e25555':(wl<=45?'#f2a121':'#2dbd8a');
  const qpsf=0.00256*windV*windV;
@@ -505,10 +554,10 @@ function frame(ts){
  const kW=getK(), kW2=kW*Math.abs(kW);
  const cWD=kW2*-1*Math.cos(tD*D2R), cWP=kW2*1*Math.cos(tP*D2R);
  const dirTxt=c=>Math.abs(c)<0.15?'gust buffet \u00B1':(c>0?'lifts / opens wing':'pushes wing closed');
- $('wFD').textContent=windV>0&&wf>0.02?Math.round(qpsf*AD*1.3*Math.max(Math.abs(cWD),0.15)):0;
- $('wFP').textContent=windV>0&&wf>0.02?Math.round(qpsf*AP*1.3*Math.max(Math.abs(cWP),0.15)):0;
- $('wTD').textContent=windV>0&&wf>0.02?dirTxt(cWD):'\u2014';
- $('wTP').textContent=windV>0&&wf>0.02?dirTxt(cWP):'\u2014';
+ $('wFD').textContent=windV>0&&wf>0.02&&have.d?Math.round(qpsf*AD*1.3*Math.max(Math.abs(cWD),0.15)):0;
+ $('wFP').textContent=windV>0&&wf>0.02&&have.p?Math.round(qpsf*AP*1.3*Math.max(Math.abs(cWP),0.15)):0;
+ $('wTD').textContent=windV>0&&wf>0.02&&have.d?dirTxt(cWD):'\u2014';
+ $('wTP').textContent=windV>0&&wf>0.02&&have.p?dirTxt(cWP):'\u2014';
  $('sD').textContent=sf.d>0.98?'slides out':(sf.d>0.02?'slides moving':'slides in');
  $('sP').textContent=sf.p>0.98?'slides out':(sf.p>0.02?'slides moving':'slides in');
 
@@ -531,7 +580,12 @@ function frame(ts){
  else if(mode==='stowed')st='Stowed \u2014 driving configuration.';
  else if(mode==='awn')st='Awning \u2014 wings locked flat (180\u00B0 plane with roof). No tracking duty cycle.';
  else if(s.se<=0)st='Tracking \u2014 sun below horizon, wings parked at end stops.';
- else st='Tracking \u2014 '+Math.round(tTd)+'\u00B0 / '+Math.round(tTp)+'\u00B0 \u00B7 sun elevation '+Math.round(elev)+'\u00B0.';
+ else {st='Tracking \u2014 '+Math.round(tTd)+'\u00B0 / '+Math.round(tTp)+'\u00B0'+(roofTrack?' \u00B7 roof '+Math.round(Math.min(45,Math.abs(90-s.alpha)))+'\u00B0':'')+' \u00B7 sun elevation '+Math.round(elev)+'\u00B0.';
+  const shl=a=>Math.round((1-a)*100), parts=[];
+  if(have.roof&&sh.roof<0.985)parts.push('roof '+shl(sh.roof)+'%');
+  if(have.d&&sh.d<0.985)parts.push('drv '+shl(sh.d)+'%');
+  if(have.p&&sh.p<0.985)parts.push('pass '+shl(sh.p)+'%');
+  if(parts.length)st+=' \u00B7 self-shade '+parts.join(' / ');}
  $('st').textContent=st;
  requestAnimationFrame(frame);
 }
@@ -585,6 +639,11 @@ $('bStw').onclick=()=>{mode='stowed';dayRun=false;$('bDay').classList.remove('on
 $('bDay').onclick=()=>{simT=4;$('T').value=4;dayRun=true;$('bDay').classList.add('on');if(mode==='stowed'){mode='track';setModeBtns();}};
 $('T').addEventListener('input',e=>{simT=+e.target.value;dayRun=false;$('bDay').classList.remove('on');});
 $('cR').onchange=e=>{tog.roof=e.target.checked;refreshEnergy();};
+$('rTrack').onchange=e=>{roofTrack=e.target.checked;refreshEnergy();};
+$('shToggle').onchange=e=>{shadeOn=e.target.checked;refreshEnergy();};
+$('hR').onchange=e=>{have.roof=e.target.checked;refreshEnergy();};
+$('hD').onchange=e=>{have.d=e.target.checked;refreshEnergy();};
+$('hP').onchange=e=>{have.p=e.target.checked;refreshEnergy();};
 $('cD').onchange=e=>{tog.d=e.target.checked;refreshEnergy();};
 $('cP').onchange=e=>{tog.p=e.target.checked;refreshEnergy();};
 function setCustom(){
