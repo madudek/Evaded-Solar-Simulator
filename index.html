@@ -24,6 +24,12 @@ header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-bottom:1
 h1{font-size:22px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;}
 h1 span{color:var(--amber);}
 .sub{font-family:var(--mono);font-size:13px;color:var(--muted);}
+.hdrCtl{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-family:var(--mono);}
+.hdrCtl>span{display:flex;align-items:center;gap:5px;}
+.hdrCtl label{font-size:10px;letter-spacing:0.09em;color:var(--muted);}
+.hdrCtl i{color:var(--muted);font-style:normal;font-size:11px;}
+.hdrCtl input{width:48px;}
+.hdrCtl input,.hdrCtl select{background:#121821;color:var(--text);border:1px solid var(--line);border-radius:5px;padding:2px 5px;font-size:12px;font-family:var(--mono);}
 .cols{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;align-items:start;}
 body.narrow .cols{display:block;}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px;}
@@ -112,6 +118,12 @@ body.wide #notesCard{margin-top:16px;}
 <header>
   <h1>EV-ADED <span>Solar</span> Simulator</h1>
   <span class="sub">v12 &mdash; tracking / awning / stow &middot; any site &middot; any heading &middot; 7 strings &middot; <span id="totW">7,700</span> W</span>
+  <div class="hdrCtl">
+    <span title="Van model"><label>VAN</label><select id="vanSel"><option value="165">BrightDrop 400</option><option value="225">BrightDrop 600</option></select></span>
+    <span title="Wheelbase (in) &mdash; sets model length"><label>WB</label><input type="number" id="wbIn" value="165" min="80" max="320" step="1"><i>in</i></span>
+    <span title="Roof panel size (in): across-van &times; along-van"><label>ROOF</label><input type="number" id="roofA" value="76" min="20" max="78" step="0.1"><i>&times;</i><input type="number" id="roofB" value="44.6" min="20" max="130" step="0.1"></span>
+    <span title="Wing panel size (in): depth across hinge (sets lever) &times; width"><label>WING</label><input type="number" id="wingDep" value="69.4" min="20" max="78" step="0.1"><i>&times;</i><input type="number" id="wingWid" value="44.6" min="20" max="130" step="0.1"></span>
+  </div>
 </header>
 
 <div class="bar">
@@ -129,7 +141,7 @@ body.wide #notesCard{margin-top:16px;}
   
 
   <div class="sceneWrap">
-  <svg class="scene" viewBox="28 8 504 460" role="img">
+  <svg class="scene" viewBox="20 4 524 482" role="img">
     <title>Van solar array isometric view with daily output curve</title>
     <desc>Isometric render of the van and tracking wings over a faint background chart of estimated output through the day for tracking, awning, and stowed modes, with the expected daily peak shown in the open sky area and a live time marker.</desc>
     <g id="g"></g>
@@ -184,7 +196,8 @@ body.wide #notesCard{margin-top:16px;}
 
   <div class="toggles">
     <b>Roof mode</b>
-    <label><input type="checkbox" id="rTrack"> Tracks sun (single-axis) &mdash; unchecked = flat</label>
+    <label>Mode <select id="roofMode"><option value="flat">Flat</option><option value="track">Single-axis tracking</option><option value="fixed">Fixed tilt</option></select></label>
+    <label id="rTiltWrap" style="display:none;">Tilt <input type="number" id="roofTilt" value="30" min="0" max="65" step="1"> &deg; <button id="rSummer">Summer</button> <button id="rWinter">Winter</button></label>
     <label><input type="checkbox" id="shToggle" checked> Account for self-shading</label>
   </div>
 
@@ -244,7 +257,7 @@ body.wide #notesCard{margin-top:16px;}
   <div class="orow"><span class="nm">Driver wing wind force</span><span class="w"><span id="wFD">0</span><small> lb</small></span><span class="e" id="wTD">&mdash;</span></div>
   <div class="orow"><span class="nm">Passenger wing wind force</span><span class="w"><span id="wFP">0</span><small> lb</small></span><span class="e" id="wTP">&mdash;</span></div>
   <div class="orow"><span class="nm">Safe wind at current angles</span><span class="w" id="wLim">&gt;120 mph</span><span class="e">actuators at rating</span></div>
-  <p class="cap">C = 1.3&middot;cos(tilt) with &plusmn;0.15 gust floor &middot; force at 34.7&Prime; centroid &middot; slide-outs add area, not lever &middot; steep dawn/dusk angles are worst case &mdash; stow flat in storms. * on a load = actuator in tension (wind under the leeward wing). Axial wind (nose/rear) carries no cross pressure &mdash; gust floor only; quartering winds carry half. Live wind via Open-Meteo at the set site, uses gust speed, direction resolved against nose heading automatically.</p>
+  <p class="cap">C = 1.3&middot;cos(tilt) with &plusmn;0.15 gust floor &middot; force at the panel mid-depth centroid &middot; slide-outs add area, not lever &middot; steep dawn/dusk angles are worst case &mdash; stow flat in storms. * on a load = actuator in tension (wind under the leeward wing). Axial wind (nose/rear) carries no cross pressure &mdash; gust floor only; quartering winds carry half. Live wind via Open-Meteo at the set site, uses gust speed, direction resolved against nose heading automatically.</p>
 </div>
 
 <div class="card" id="outCard">
@@ -296,14 +309,15 @@ body.wide #notesCard{margin-top:16px;}
   <tr><td><b>Total</b></td><td>14 panels</td><td>Noon plane &approx; 218.8&Prime; W &times; 287&Prime; L</td><td>7 strings</td><td>7,700 W</td></tr>
 </table>
 
-<footer>EV-ADED Solar Simulator. Sun model: site latitude, declination &plusmn;23.44&deg; by season, solar time, full azimuth geometry projected onto the wing cross-plane for any van heading. Load model: F = W&middot;r<sub>cg</sub>&middot;L(&theta;)/(a&middot;b) per wing across 2 actuators; sin&theta; cancels between gravity torque and the linkage&rsquo;s effective arm, so force rises monotonically with &theta; and peaks at the highest reachable angle. Arm suggestion solves L(15&deg;)=retracted and L(165&deg;)=extended exactly, using the full stroke. Reach turns red when the entered arms can&rsquo;t cover 15&ndash;165&deg; with the entered actuator lengths. Wind: q=0.00256&middot;V&sup2; psf on full wing area, C=1.3&middot;cos(tilt) with &plusmn;0.15 gust floor, force at the 34.7&Prime; centroid (slide-outs add area, not lever). Wind loads grow as cot(tilt) through the linkage, so steep dawn/dusk angles are the danger &mdash; stow flat above the shown wind limit. * = load reversal (actuator in tension, wind under the leeward wing). Gas-strut assist and van shielding excluded (conservative); stowed shows 0 (transit latches). Interlock: wings deploy before slides extend; slides retract before wings fold. Output assumes clear sky, 0.85 system derate.</footer>
+<footer>EV-ADED Solar Simulator. Sun model: site latitude, declination &plusmn;23.44&deg; by season, solar time, full azimuth geometry projected onto the wing cross-plane for any van heading. Load model: F = W&middot;r<sub>cg</sub>&middot;L(&theta;)/(a&middot;b) per wing across 2 actuators; sin&theta; cancels between gravity torque and the linkage&rsquo;s effective arm, so force rises monotonically with &theta; and peaks at the highest reachable angle. Arm suggestion solves L(15&deg;)=retracted and L(165&deg;)=extended exactly, using the full stroke. Reach turns red when the entered arms can&rsquo;t cover 15&ndash;165&deg; with the entered actuator lengths. Wind: q=0.00256&middot;V&sup2; psf on full wing area, C=1.3&middot;cos(tilt) with &plusmn;0.15 gust floor, force at the panel mid-depth centroid (slide-outs add area, not lever). Wind loads grow as cot(tilt) through the linkage, so steep dawn/dusk angles are the danger &mdash; stow flat above the shown wind limit. * = load reversal (actuator in tension, wind under the leeward wing). Gas-strut assist and van shielding excluded (conservative); stowed shows 0 (transit latches). Interlock: wings deploy before slides extend; slides retract before wings fold. Output assumes clear sky, 0.85 system derate.</footer>
 </div>
 
 <script>
 const D2R=Math.PI/180;
 let LATv=40.76*D2R, LONv=-111.891, locName='Salt Lake City', hdg=0;
 const cfg={nR:4,pR:550,nD:3,pD:440,nP:3,pP:440};
-const HZ=108, COLW=44.6, DEP=69.4;
+const HZ=108;
+let wingDep=69.4, wingWid=44.6, roofA=76, roofB=44.6;
 const RFW=44.5;
 const CI=Math.cos(Math.PI/6), SN=0.5, ZK=0.9, OX=185, OY=300;
 function P(x,y,z){return [+(OX+(x-y)*CI).toFixed(1), +(OY+(x+y)*SN-z*ZK).toFixed(1)];}
@@ -315,43 +329,60 @@ function wpt(sgn,t,x,d,o){const st=Math.sin(t*D2R),ct=Math.cos(t*D2R),yh=sgn>0?8
 function wq(sgn,t,xa,xb,da,db,o){return [wpt(sgn,t,xa,da,o),wpt(sgn,t,xb,da,o),wpt(sgn,t,xb,db,o),wpt(sgn,t,xa,db,o)];}
 
 const PNL='#3d8fd6', PNL2='#1d5a96', AMB='#f2a121', BODY='#7d8a9a';
-function vanBody(){
+function vanBody(L){
+ const GL='#9fb4c9', DK='#566273';
  let s='';
- s+=poly([P(62,80,20),P(240,80,20),P(240,80,108),P(62,80,108)],BODY,0.10,BODY,0.6);
- s+=poly([P(240,0,20),P(240,80,20),P(240,80,108),P(240,0,108)],BODY,0.12,BODY,0.6);
- s+=poly([P(62,0,20),P(240,0,20),P(240,0,108),P(62,0,108)],BODY,0.06,BODY,0.5,'3 3');
- s+=poly(rq(62,240,0,80,108),BODY,0.05,BODY,0.6);
- s+=poly([P(2,80,20),P(62,80,20),P(62,80,84),P(14,80,84)],BODY,0.10,BODY,0.6);
- s+=poly(rq(14,62,0,80,84),BODY,0.06,BODY,0.6);
- s+=poly([P(2,0,20),P(2,80,20),P(14,80,84),P(14,0,84)],BODY,0.08,BODY,0.5);
- const w=(x)=>{const c=P(x,80,14);return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="13" fill="'+BODY+'" fill-opacity="0.5"/>';};
- s+=w(42)+w(205);
+ // far side + top (faint, drawn first)
+ s+=poly([P(62,0,20),P(L,0,20),P(L,0,108),P(62,0,108)],BODY,0.06,BODY,0.5,'3 3');
+ s+=poly([P(6,0,20),P(62,0,20),P(62,0,100),P(40,0,100),P(6,0,52)],BODY,0.05,BODY,0.5,'3 3');
+ s+=poly(rq(62,L,0,80,108),BODY,0.05,BODY,0.6);
+ s+=poly(rq(40,62,0,80,100),BODY,0.08,BODY,0.6);
+ // cargo box
+ s+=poly([P(L,0,20),P(L,80,20),P(L,80,108),P(L,0,108)],BODY,0.13,BODY,0.6);
+ s+=poly([P(62,80,20),P(L,80,20),P(L,80,108),P(62,80,108)],BODY,0.10,BODY,0.6);
+ // step up from cab roof (100) to cargo (108)
+ s+=poly([P(62,0,100),P(62,80,100),P(62,80,108),P(62,0,108)],BODY,0.15,BODY,0.6);
+ // cab near-side silhouette (cab-forward, raked windshield)
+ s+=poly([P(6,80,20),P(62,80,20),P(62,80,100),P(40,80,100),P(6,80,52)],BODY,0.11,BODY,0.6);
+ // front fascia + windshield glass
+ s+=poly([P(6,0,20),P(6,80,20),P(6,80,52),P(6,0,52)],BODY,0.17,BODY,0.6);
+ s+=poly([P(6,0,52),P(6,80,52),P(40,80,100),P(40,0,100)],GL,0.5,'#cdd9e6',0.8);
+ // beltline crease
+ s+=poly([P(9,80,58),P(L-2,80,58),P(L-2,80,61),P(9,80,61)],DK,0.22,DK,0.3);
+ // wheels with fender arches (near side)
+ const wheel=(x)=>{const c=P(x,80,15),a1=P(x-16,80,15),a2=P(x+16,80,15),tp=P(x,80,33);
+   return '<path d="M'+a1[0]+','+a1[1]+' Q'+tp[0]+','+(tp[1]-5)+' '+a2[0]+','+a2[1]+'" fill="none" stroke="'+DK+'" stroke-width="2" opacity="0.5"/>'+
+          '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="13" fill="'+DK+'" fill-opacity="0.6"/>'+
+          '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="5.5" fill="'+BODY+'" fill-opacity="0.8"/>';};
+ s+=wheel(40)+wheel(L-35);
+ const hl=P(6,80,30);s+='<circle cx="'+hl[0]+'" cy="'+hl[1]+'" r="3" fill="#dfe6ee" fill-opacity="0.7"/>';
  return s;
 }
-const VAN=vanBody();
 
 function wingSVG(sgn,t,sl,n,dim){
  const dm=dim==null?1:dim;
  let s='';
- const nn=Math.min(8,Math.max(1,n)), WB=133.8/nn, x0=84.1;
- const f=x0-WB*sl, r=x0+133.8-WB+WB*sl;
- s+=poly(wq(sgn,t,f+0.8,f+WB-0.8,0.8,DEP-0.8,-2),PNL2,0.55+0.35*sl,AMB,1.8);
- s+=poly(wq(sgn,t,r+0.8,r+WB-0.8,0.8,DEP-0.8,-2),PNL2,0.55+0.35*sl,AMB,1.8);
+ const CL=vanLen-62, WL=0.76*CL, x0=62+0.12*CL, nn=Math.min(8,Math.max(1,n)), WB=WL/nn;
+ const f=x0-WB*sl, r=x0+WL-WB+WB*sl;
+ s+=poly(wq(sgn,t,f+0.8,f+WB-0.8,0.8,wingDep-0.8,-2),PNL2,0.55+0.35*sl,AMB,1.8);
+ s+=poly(wq(sgn,t,r+0.8,r+WB-0.8,0.8,wingDep-0.8,-2),PNL2,0.55+0.35*sl,AMB,1.8);
  for(let i=0;i<nn;i++){const x=x0+i*WB;
-  s+=poly(wq(sgn,t,x+0.8,x+WB-0.8,0.8,DEP-0.8,0),PNL,0.9*dm,'#7db8e8',0.8);}
+  s+=poly(wq(sgn,t,x+0.8,x+WB-0.8,0.8,wingDep-0.8,0),PNL,0.9*dm,'#7db8e8',0.8);}
  return s;
 }
 function roofSVG(sr,beta,dir,dim){
  const dm=dim==null?1:dim;
  let s='';
- const nn=Math.min(8,Math.max(1,cfg.nR)), RB=178/nn;
- const f=62-RB*sr, r=240-RB+RB*sr;
+ const nn=Math.min(8,Math.max(1,cfg.nR)), RB=(vanLen-62)/nn;
+ const f=62-RB*sr, r=vanLen-RB+RB*sr;
  const tb=Math.tan((beta||0)*D2R), d=dir>=0?1:-1;
- const zf=y=>109+(d>=0?(78-y):(y-2))*tb;
- s+=poly(rqz(f,f+RB,2,78,zf(2),zf(78)),PNL2,0.55+0.35*sr,AMB,1.8);
- s+=poly(rqz(r,r+RB,2,78,zf(2),zf(78)),PNL2,0.55+0.35*sr,AMB,1.8);
+ const roofLo=40-roofA/2, roofHi=40+roofA/2;
+ const zf=y=>109+(d>=0?(roofHi-y):(y-roofLo))*tb;
+ s+=poly(rqz(f,f+RB,roofLo,roofHi,zf(roofLo),zf(roofHi)),PNL2,0.55+0.35*sr,AMB,1.8);
+ s+=poly(rqz(r,r+RB,roofLo,roofHi,zf(roofLo),zf(roofHi)),PNL2,0.55+0.35*sr,AMB,1.8);
  for(let i=0;i<nn;i++){const x=62+i*RB;
-  s+=poly(rqz(x+0.8,x+RB-0.8,1.5,78.5,zf(1.5),zf(78.5)),PNL,0.9*dm,'#7db8e8',0.8);}
+  s+=poly(rqz(x+0.8,x+RB-0.8,roofLo,roofHi,zf(roofLo),zf(roofHi)),PNL,0.9*dm,'#7db8e8',0.8);}
+ void r;
  return s;
 }
 function sunSVG(sr,u,up,el){
@@ -380,13 +411,19 @@ function dayBounds(){
  const c=-Math.tan(LATv)*Math.tan(dec), H=Math.acos(Math.min(1,Math.max(-1,c)))/D2R/15;
  return [12-H,12+H];
 }
-function shadeFactors(s,tD,tP,rt){
+function roofGeom(s,active){
+ if(!active||s.se<=0)return {beta:0,dir:1,rci:s.se};
+ if(roofMode==='track'){const b=Math.min(45,Math.abs(90-s.alpha));return {beta:b,dir:(s.E>=0?1:-1),rci:Math.min(1,Math.sqrt(s.E*s.E+s.U*s.U))};}
+ if(roofMode==='fixed'){const d=Math.sign(Math.sin(hdg*D2R))||1,b=roofTilt;return {beta:b,dir:d,rci:Math.max(0,d*Math.sin(b*D2R)*s.E+Math.cos(b*D2R)*s.U)};}
+ return {beta:0,dir:1,rci:s.se};
+}
+function shadeFactors(s,tD,tP,rBeta,rDir){
  const out={roof:1,d:1,p:1};
  if(!shadeOn||s.se<=0)return out;
- const mag=Math.hypot(s.E,s.U)||1, ux=s.E/mag, uz=s.U/mag, DEPv=69.4;
+ const mag=Math.hypot(s.E,s.U)||1, ux=s.E/mag, uz=s.U/mag, DEPv=wingDep;
  const segs=[];
- if(have.roof){const beta=rt?Math.min(45,Math.abs(90-s.alpha)):0,d=(s.E>=0?1:-1),tb=Math.tan(beta*D2R);
-  segs.push({k:'roof',A:[2,109+(d>=0?76:0)*tb],B:[78,109+(d>=0?0:76)*tb]});}
+ if(have.roof){const d=(rDir>=0?1:-1),tb=Math.tan((rBeta||0)*D2R),rLo=40-roofA/2,rHi=40+roofA/2;
+  segs.push({k:'roof',A:[rLo,109+(d>=0?roofA:0)*tb],B:[rHi,109+(d>=0?0:roofA)*tb]});}
  if(have.d)segs.push({k:'d',A:[0,108],B:[-DEPv*Math.sin(tD*D2R),108-DEPv*Math.cos(tD*D2R)]});
  if(have.p)segs.push({k:'p',A:[80,108],B:[80+DEPv*Math.sin(tP*D2R),108-DEPv*Math.cos(tP*D2R)]});
  const N=14;
@@ -403,18 +440,18 @@ function shadeFactors(s,tD,tP,rt){
   out[segs[i].k]=1-blk/N;}
  return out;
 }
-function powerCalc(s,tD,tP,sr,sd,sp,rt){
+function powerCalc(s,tD,tP,sr,sd,sp,active){
  if(s.se<=0)return 0;
  const f=Math.pow(s.se,0.3)*0.85;
- const sh=shadeFactors(s,tD,tP,rt);
- const rci=rt?Math.min(1,Math.sqrt(s.E*s.E+s.U*s.U)):s.se;
- const roof=(cfg.nR*cfg.pR+2*cfg.pR*sr)*rci*(have.roof?1:0)*sh.roof;
+ const rg=roofGeom(s,active);
+ const sh=shadeFactors(s,tD,tP,rg.beta,rg.dir);
+ const roof=(cfg.nR*cfg.pR+2*cfg.pR*sr)*rg.rci*(have.roof?1:0)*sh.roof;
  const w=(sgn,t,sl,n,pw,on,shd)=>{if(!on)return 0;const ci=Math.max(0,sgn*Math.cos(t*D2R)*s.E+Math.sin(t*D2R)*s.U);return (n*pw+2*pw*sl)*ci*shd;};
  return (roof+w(-1,tD,sd,cfg.nD,cfg.pD,have.d,sh.d)+w(1,tP,sp,cfg.nP,cfg.pP,have.p,sh.p))*f;
 }
 let wD=200, wP=200, armA=18.7, armB=64.4, aRet=46.6, aExt=82.6, rating=500, suggA=0, suggB=0, windV=0, windSel='1', liveDir=null;
 function Lact(t){return Math.sqrt(armA*armA+armB*armB-2*armA*armB*Math.cos(t*D2R));}
-function wingArea(n,sl){return (n+2*sl)*44.6*69.4/144;}
+function wingArea(n,sl){return (n+2*sl)*wingWid*wingDep/144;}
 function getK(){
  if(windSel==='live')return liveDir==null?0:-Math.sin((liveDir-hdg)*D2R);
  return parseFloat(windSel)||0;
@@ -422,8 +459,8 @@ function getK(){
 function loadW(t,w,sgn,A){
  if(t<=0.5)return {f:0,ten:false};
  const e=armA*armB*Math.sin(t*D2R)/Lact(t);
- const Tg=w*34.7*Math.sin(t*D2R);
- const B=0.00256*windV*windV*A*1.3*34.7;
+ const Tg=w*(wingDep/2)*Math.sin(t*D2R);
+ const B=0.00256*windV*windV*A*1.3*(wingDep/2);
  const k=getK(), c=k*Math.abs(k)*sgn*Math.cos(t*D2R);
  const cands=Math.abs(c)<0.15?[0.15,-0.15]:[c];
  let m=0,neg=false;
@@ -450,14 +487,14 @@ function updateSugg(){
  const sum=Math.sqrt(S+2*P), dif=Math.sqrt(S-2*P);
  const sm=(sum-dif)/2, bg=(sum+dif)/2;
  let wall=sm, panel=bg, note='short wall / long panel (X-crossing)';
- if(bg>69.4){wall=bg;panel=sm;note='long wall arm \u2014 panel depth caps panel arm';}
+ if(bg>wingDep){wall=bg;panel=sm;note='long wall arm \u2014 panel depth caps panel arm';}
  suggA=Math.round(wall*10)/10; suggB=Math.round(panel*10)/10;
- const Fmax=Math.max(wD,wP)*34.7*aExt/(wall*panel)/2;
+ const Fmax=Math.max(wD,wP)*(wingDep/2)*aExt/(wall*panel)/2;
  el.innerHTML='best fit: on wall <b>'+suggA.toFixed(1)+'\u2033</b> \u00B7 on panel <b>'+suggB.toFixed(1)+'\u2033</b> \u2014 full '+(aExt-aRet).toFixed(1)+'\u2033 stroke over 15\u2013165\u00B0, max \u2248 '+Math.round(Fmax)+' lb/act ('+Math.round(Fmax/rating*100)+'%) \u00B7 '+note;
 }
 function modeP(T,m){
  const s=sunPos(T);
- if(m===0)return powerCalc(s,Math.min(165,Math.max(15,180-s.alpha)),Math.min(165,Math.max(15,s.alpha)),tog.roof?1:0,tog.d?1:0,tog.p?1:0,roofTrack);
+ if(m===0)return powerCalc(s,Math.min(165,Math.max(15,180-s.alpha)),Math.min(165,Math.max(15,s.alpha)),tog.roof?1:0,tog.d?1:0,tog.p?1:0,true);
  if(m===1)return powerCalc(s,90,90,tog.roof?1:0,tog.d?1:0,tog.p?1:0,false);
  return powerCalc(s,0,0,0,0,0,false);
 }
@@ -494,7 +531,7 @@ function renderChart(){
 }
 
 let mode='stowed', wf=0, sf={roof:0,d:0,p:0}, tog={roof:false,d:false,p:false};
-let roofTrack=false;
+let roofMode='flat', roofTilt=30, vanLen=240, wheelbase=165;
 let have={roof:true,d:true,p:true};
 let shadeOn=true;
 let simT=9, last=null, dayRun=false;
@@ -520,12 +557,11 @@ function frame(ts){
  const tTp=mode==='awn'?90:Math.min(165,Math.max(15,s.alpha));
  const tD=wf*tTd, tP=wf*tTp;
 
- const sh=s.se>0?shadeFactors(s,tD,tP,roofTrack&&mode==='track'):{roof:1,d:1,p:1};
+ const rg=roofGeom(s,mode==='track'&&s.se>0);
+ const sh=s.se>0?shadeFactors(s,tD,tP,rg.beta,rg.dir):{roof:1,d:1,p:1};
  let sv=sunSVG(s.E,s.U,s.se>0,Math.asin(Math.max(-1,Math.min(1,s.se)))/D2R);
  if(have.d&&tD<=90)sv+='<g>'+wingSVG(-1,tD,sf.d,cfg.nD,sh.d)+'</g>';
- let rB=0, rD=1;
- if(roofTrack&&mode==='track'&&s.se>0){rB=Math.min(45,Math.abs(90-s.alpha))*wf; rD=s.E>=0?1:-1;}
- sv+=VAN+(have.roof?roofSVG(sf.roof,rB,rD,sh.roof):'');
+ sv+=vanBody(vanLen)+(have.roof?roofSVG(sf.roof,Math.min(55,rg.beta)*wf,rg.dir,sh.roof):'');
  if(have.d&&tD>90)sv+='<g>'+wingSVG(-1,tD,sf.d,cfg.nD,sh.d)+'</g>';
  if(have.p)sv+='<g>'+wingSVG(1,tP,sf.p,cfg.nP,sh.p)+'</g>';
  $('g').innerHTML=sv;
@@ -580,7 +616,7 @@ function frame(ts){
  else if(mode==='stowed')st='Stowed \u2014 driving configuration.';
  else if(mode==='awn')st='Awning \u2014 wings locked flat (180\u00B0 plane with roof). No tracking duty cycle.';
  else if(s.se<=0)st='Tracking \u2014 sun below horizon, wings parked at end stops.';
- else {st='Tracking \u2014 '+Math.round(tTd)+'\u00B0 / '+Math.round(tTp)+'\u00B0'+(roofTrack?' \u00B7 roof '+Math.round(Math.min(45,Math.abs(90-s.alpha)))+'\u00B0':'')+' \u00B7 sun elevation '+Math.round(elev)+'\u00B0.';
+ else {st='Tracking \u2014 '+Math.round(tTd)+'\u00B0 / '+Math.round(tTp)+'\u00B0'+(roofMode!=='flat'?' \u00B7 roof '+(roofMode==='fixed'?'fixed ':'')+Math.round(roofGeom(s,true).beta)+'\u00B0':'')+' \u00B7 sun elevation '+Math.round(elev)+'\u00B0.';
   const shl=a=>Math.round((1-a)*100), parts=[];
   if(have.roof&&sh.roof<0.985)parts.push('roof '+shl(sh.roof)+'%');
   if(have.d&&sh.d<0.985)parts.push('drv '+shl(sh.d)+'%');
@@ -639,7 +675,12 @@ $('bStw').onclick=()=>{mode='stowed';dayRun=false;$('bDay').classList.remove('on
 $('bDay').onclick=()=>{simT=4;$('T').value=4;dayRun=true;$('bDay').classList.add('on');if(mode==='stowed'){mode='track';setModeBtns();}};
 $('T').addEventListener('input',e=>{simT=+e.target.value;dayRun=false;$('bDay').classList.remove('on');});
 $('cR').onchange=e=>{tog.roof=e.target.checked;refreshEnergy();};
-$('rTrack').onchange=e=>{roofTrack=e.target.checked;refreshEnergy();};
+function roofModeUI(){$('rTiltWrap').style.display=roofMode==='fixed'?'':'none';}
+$('roofMode').onchange=e=>{roofMode=e.target.value;roofModeUI();refreshEnergy();};
+$('roofTilt').oninput=e=>{roofTilt=Math.max(0,Math.min(65,+e.target.value||0));refreshEnergy();};
+$('rSummer').onclick=()=>{roofTilt=Math.max(0,Math.round(Math.abs(LATv/D2R)-12));$('roofTilt').value=roofTilt;roofMode='fixed';$('roofMode').value='fixed';roofModeUI();refreshEnergy();};
+$('rWinter').onclick=()=>{roofTilt=Math.min(65,Math.round(Math.abs(LATv/D2R)+12));$('roofTilt').value=roofTilt;roofMode='fixed';$('roofMode').value='fixed';roofModeUI();refreshEnergy();};
+roofModeUI();
 $('shToggle').onchange=e=>{shadeOn=e.target.checked;refreshEnergy();};
 $('hR').onchange=e=>{have.roof=e.target.checked;refreshEnergy();};
 $('hD').onchange=e=>{have.d=e.target.checked;refreshEnergy();};
@@ -662,10 +703,17 @@ $('seS').onclick=()=>setSeason(23.44,'seS');
 $('bLoc').onclick=setLocation;
 $('locQ').addEventListener('keydown',e=>{if(e.key==='Enter')setLocation();});
 $('hdg').onchange=e=>{hdg=+e.target.value;faceUpdate();refreshEnergy();};
+function setWB(wb){wheelbase=Math.max(60,Math.min(340,wb||165)); vanLen=Math.round(wheelbase+75); $('wbIn').value=Math.round(wheelbase);}
+$('vanSel').onchange=e=>{setWB(+e.target.value);};
+$('wbIn').oninput=e=>{setWB(+e.target.value);};
+$('roofA').oninput=e=>{roofA=Math.max(20,Math.min(78,+e.target.value||76));};
+$('roofB').oninput=e=>{roofB=Math.max(20,+e.target.value||44.6);};
+$('wingDep').oninput=e=>{wingDep=Math.max(20,Math.min(78,+e.target.value||69.4));};
+$('wingWid').oninput=e=>{wingWid=Math.max(20,+e.target.value||44.6);};
 $('wD').oninput=e=>{wD=Math.max(0,+e.target.value||0);};
 $('wP').oninput=e=>{wP=Math.max(0,+e.target.value||0);};
 $('armA').oninput=e=>{armA=Math.min(95,Math.max(4,+e.target.value||18.7));};
-$('armB').oninput=e=>{armB=Math.min(69.4,Math.max(4,+e.target.value||64.4));};
+$('armB').oninput=e=>{armB=Math.min(wingDep,Math.max(4,+e.target.value||64.4));};
 $('inRet').oninput=e=>{aRet=Math.max(5,+e.target.value||46.6);updateSugg();};
 $('inExt').oninput=e=>{aExt=Math.max(aRet+1,+e.target.value||82.6);updateSugg();};
 $('windVin').oninput=e=>{windV=Math.min(120,Math.max(0,+e.target.value||0));};

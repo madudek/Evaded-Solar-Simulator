@@ -1,6 +1,6 @@
 # EV-ADED Solar Simulator
 
-Interactive engineering simulator for a van-mounted solar array with deployable sun-tracking wings, an optionally-tracking roof, fore/aft slide-out panels, actuator load analysis, wind loading, and inter-array self-shading. Built for the EV-ADED mobile solar platform, but flexible enough to model any roof or roof-plus-wing setup.
+Interactive engineering simulator for a van-mounted solar array with deployable sun-tracking wings, a roof that can be flat / tracking / fixed-tilt, fore/aft slide-out panels, actuator load analysis, wind loading, and inter-array self-shading. Built for the EV-ADED mobile solar platform, but flexible enough to model any roof or roof-plus-wing setup.
 
 **Live demo:** https://madudek.github.io/Evaded-Solar-Simulator/
 
@@ -8,11 +8,11 @@ Interactive engineering simulator for a van-mounted solar array with deployable 
 
 ## What it models
 
-A delivery-van solar system with three independent surfaces and seven strings (defaults shown — counts, wattages, and presence are all adjustable in the UI):
+A delivery-van solar system with three independent surfaces and seven strings (defaults shown — counts, wattages, dimensions, and presence are all adjustable in the UI):
 
 | Surface | Stationary panels | Slide-outs | Motion |
 |---|---|---|---|
-| Roof | 4 x 550 W | 2 x 550 W | Flat by default, or single-axis tracking; slide-outs travel fore/aft, front over the cab |
+| Roof | 4 x 550 W | 2 x 550 W | Flat, single-axis tracking, or fixed seasonal tilt; slide-outs travel fore/aft, front over the cab |
 | Driver wing | 3 x 440 W portrait | 2 x 440 W | Hinged at the roofline, 15-165 deg sun tracking; slide-outs extend fore/aft in the same row |
 | Passenger wing | 3 x 440 W portrait | 2 x 440 W | Mirror of the driver wing, independently tracked |
 
@@ -21,20 +21,26 @@ Default total: 7,700 W across 14 panels.
 ## Features
 
 ### Pick your hardware
-- **Installed** checkboxes turn each array on or off — model a roof-only build by unchecking both wings, a wings-only rig by unchecking the roof, or any combination. Disabled arrays drop out of power, the 3D view, and the load/wind calcs.
+- **Installed** checkboxes turn each array on or off — model a roof-only build by unchecking both wings, a wings-only rig by unchecking the roof, or any combination. Disabled arrays drop out of power, the scene, and the load/wind calcs.
 - Per-surface panel counts and wattages; slide-outs optional per surface via checkboxes.
+- **Van model** (BrightDrop 400 / 600) and a **wheelbase** field set the drawn length and proportions; the roof and wing layouts stretch to match. Length is visual context only — output is panel-count based, so it doesn't change any numbers.
+- **Panel size** inputs, separately for roof (across-van x along-van) and wing (depth x width). Wing dimensions are physical: the depth is the actuator lever arm, so editing it flows through the wing geometry, the gravity and wind centroid, actuator force, the best-fit arm solver, and the wind area. Roof dimensions set the drawn roof footprint (roof output is wattage-based and the roof carries no wind or actuator load).
+- Van, wheelbase, and panel-size controls live in the header strip to keep the main dashboard compact.
 
 ### Operating modes
-- **Track** — wings follow the sun through 15-165 deg, each at its own angle; roof tracks too if enabled
+- **Track** — wings follow the sun through 15-165 deg, each at its own angle; roof tracks too if set to tracking
 - **Awning** — wings locked flat at 90 deg, forming a 180 deg plane with the roof
 - **Stow** — driving configuration with interlock sequencing (wings deploy before slide-outs extend; slide-outs retract before wings fold)
 - **Run day** animation sweeping sunrise to sunset with every readout live
 
-### Roof tracking
-- A checkbox switches the roof between flat and an ideal single-axis tracker tilting about the fore/aft axis. The roof tilts in the 3D view and the energy reflects the gain — which is concentrated in the morning and evening shoulders, near zero at midday when a flat roof is already optimal.
+### Roof modes
+A dropdown sets the roof to one of three states:
+- **Flat** — panels lie in the roof plane.
+- **Single-axis tracking** — an ideal tracker tilting about the fore/aft axis; the gain is concentrated in the morning and evening shoulders and is near zero at midday, when a flat roof is already optimal.
+- **Fixed tilt** — a held angle, with **Summer** and **Winter** preset buttons (latitude -/+ ~12 deg) or any angle you type. Lets you compare a parked seasonal tilt against flat: with the sun low, a steep winter tilt can nearly triple flat-roof yield, while summer wants it shallow or flat. The roof tilts in the scene and the energy reflects it.
 
 ### Self-shading
-- A cross-plane ray-trace computes how much each array is shadowed by the others and derates power accordingly, with shaded panels dimmed in the 3D view and a live self-shading readout. Toggle it with the **Account for self-shading** checkbox to compare against an idealized no-shadow upper bound.
+- A cross-plane ray-trace computes how much each array is shadowed by the others and derates power accordingly, with shaded panels dimmed in the scene and a live self-shading readout. Toggle it with the **Account for self-shading** checkbox to compare against an idealized no-shadow upper bound.
 - Reveals a real design tradeoff: a tracking roof tilts up to face a low sun and shadows the up-pointing wing behind it — exactly during the shoulder hours roof tracking is meant to help — so the gains partially cancel on a co-tracking system.
 
 ### Sun model
@@ -47,6 +53,7 @@ Default total: 7,700 W across 14 panels.
 - Linkage load model: F = W*r*L(theta)/(a*b) per wing across 2 actuators — gravity's sin(theta) cancels against the linkage arm, so force rises with wing angle and peaks at the over-roof end stop
 - Enter actuator retracted/extended lengths, rating, and mounting distances from the hinge; **best-fit** solves the mounting geometry for the full stroke with one click
 - Reach validation flags arms that can't cover 15-165 deg; per-wing weights, live load, and the true worst-case load with its angle
+- The gravity/wind lever follows the entered wing panel depth (half-depth centroid), so resizing the wing updates the loads
 
 ### Wind loading
 - Wind speed plus 8 relative directions (driver/passenger/nose/rear and four quarters) with correct vector physics — axial wind carries no cross pressure, quarters carry half
@@ -60,17 +67,18 @@ Default total: 7,700 W across 14 panels.
 ## How to use
 
 1. **Installed** — check the arrays you actually have.
-2. **Site + nose heading** — nose N/S aims the wings east-west for the full tracking sweep; nose E/W largely wastes them, and the tool quantifies the cost.
-3. **Configure** — panel counts/wattages, wing weights, actuator specs and mounting (or apply the suggested best fit), roof flat vs tracking, self-shading on/off.
-4. **Operate** — Track / Awning / Stow, slide-out checkboxes, time slider or Run day.
-5. **Check wind** — fetch live or enter a worst case, and read the safe-wind limit before leaving the array deployed.
+2. **Van + dimensions** (header strip) — pick BrightDrop 400/600, set the wheelbase, and enter your real roof and wing panel sizes so the geometry and wing loads match your build.
+3. **Site + nose heading** — nose N/S aims the wings east-west for the full tracking sweep; nose E/W largely wastes the wings (but is where fixed roof tilt shines), and the tool quantifies the cost.
+4. **Configure** — panel counts/wattages, wing weights, actuator specs and mounting (or apply the suggested best fit), roof flat/tracking/fixed-tilt, self-shading on/off.
+5. **Operate** — Track / Awning / Stow, slide-out checkboxes, time slider or Run day.
+6. **Check wind** — fetch live or enter a worst case, and read the safe-wind limit before leaving the array deployed.
 
 ## Physics summary
 
 - Sun position: site latitude, declination (+/-23.44 deg by season or solved from custom day length), hour angle, full azimuth, solar time
-- Irradiance: clear sky, air-mass sin(elev)^0.3, 0.85 system derate; flat surface proportional to sin(elevation), single-axis tracked to sqrt(E^2+U^2) of the cross-plane sun projection
+- Irradiance: clear sky, air-mass sin(elev)^0.3, 0.85 system derate; flat surface proportional to sin(elevation), single-axis tracked to sqrt(E^2+U^2) of the cross-plane sun projection, fixed tilt to the cosine of incidence on the held panel
 - Self-shading: 2D cross-plane ray-trace, linear area derate (real series-string losses can exceed this, so shaded figures are optimistic)
-- Actuator: gravity torque W*r*sin(theta) over effective arm a*b*sin(theta)/L(theta); wind torque q*A*C*d at C = 1.3*cos(tilt) with +/-0.15 gust floor, force at the 34.7 in panel centroid; fore/aft slide-outs add area and weight but no lever
+- Actuator: gravity torque W*r*sin(theta) over effective arm a*b*sin(theta)/L(theta); wind torque q*A*C*d at C = 1.3*cos(tilt) with +/-0.15 gust floor, force at the panel mid-depth centroid (half the entered wing depth); fore/aft slide-outs add area and weight but no lever
 - Conservatisms: gas-strut assist, van shielding, and dynamic gust factors excluded; outputs are clear-sky upper bounds; loads are static requirements
 
 ## Running locally
