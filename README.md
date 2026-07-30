@@ -61,6 +61,13 @@ A dropdown sets the roof to one of three states:
 - Per-wing wind force with plain-language direction, load-reversal marker (* = actuator in tension), and a color-coded **safe wind limit** at the current angles
 - Key result: wind load through the linkage grows as cot(tilt), so steep dawn/dusk angles are the danger case and a wind harmless when flat can exceed the rating at the end stops — stow flat in storms
 
+### Hinge loads
+- Planar reaction carried by the hinge line, balancing wing weight, wind drag, and the actuator pair at the worst wind direction — the load your hinge and its fasteners actually see
+- Three readouts: the live value at the current angle, and two peak-over-travel envelopes (dead-load, and at the current wind) so you can read the wind amplification directly
+- Continuous vs. sectioned hinge: enter a capacity (lb per inch for a continuous hinge, or lb per leaf for N sections) and it distributes the load accordingly
+- **Stow above** trigger folds the hinge into the stow decision: it reports the wind speed where either the actuator rating or the hinge capacity is reached first over the travel, and which one governs — the number to drive an auto-stow rule, not just the actuator limit
+- Flat-panel uplift isn't modeled (matches the actuator wind convention); steep angles govern
+
 ### Display
 - Auto-scales to fit the dashboard on one screen across laptops, monitors, and tablets; stacks to a single column on phones.
 
@@ -71,7 +78,7 @@ A dropdown sets the roof to one of three states:
 3. **Site + nose heading** — nose N/S aims the wings east-west for the full tracking sweep; nose E/W largely wastes the wings (but is where fixed roof tilt shines), and the tool quantifies the cost.
 4. **Configure** — panel counts/wattages, wing weights, actuator specs and mounting (or apply the suggested best fit), roof flat/tracking/fixed-tilt, self-shading on/off.
 5. **Operate** — Track / Awning / Stow, slide-out checkboxes, time slider or Run day.
-6. **Check wind** — fetch live or enter a worst case, and read the safe-wind limit before leaving the array deployed.
+6. **Check wind and hinge** — fetch live or enter a worst case, set your hinge type and capacity, and read the safe-wind limit and the governing stow-above trigger before leaving the array deployed.
 
 ## Physics summary
 
@@ -79,6 +86,7 @@ A dropdown sets the roof to one of three states:
 - Irradiance: clear sky, air-mass sin(elev)^0.3, 0.85 system derate; flat surface proportional to sin(elevation), single-axis tracked to sqrt(E^2+U^2) of the cross-plane sun projection, fixed tilt to the cosine of incidence on the held panel
 - Self-shading: 2D cross-plane ray-trace, linear area derate (real series-string losses can exceed this, so shaded figures are optimistic)
 - Actuator: gravity torque W*r*sin(theta) over effective arm a*b*sin(theta)/L(theta); wind torque q*A*C*d at C = 1.3*cos(tilt) with +/-0.15 gust floor, force at the panel mid-depth centroid (half the entered wing depth); fore/aft slide-outs add area and weight but no lever
+- Hinge: planar force balance at the hinge line — wing weight, wind drag, and the actuator reaction summed and resolved at the worst wind direction; distributed over the fixed-panel span for a per-inch (continuous) or per-leaf (sectioned) load
 - Conservatisms: gas-strut assist, van shielding, and dynamic gust factors excluded; outputs are clear-sky upper bounds; loads are static requirements
 
 ## Running locally

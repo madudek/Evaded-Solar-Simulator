@@ -258,6 +258,17 @@ body.wide #notesCard{margin-top:16px;}
   <div class="orow"><span class="nm">Passenger wing wind force</span><span class="w"><span id="wFP">0</span><small> lb</small></span><span class="e" id="wTP">&mdash;</span></div>
   <div class="orow"><span class="nm">Safe wind at current angles</span><span class="w" id="wLim">&gt;120 mph</span><span class="e">actuators at rating</span></div>
   <p class="cap">C = 1.3&middot;cos(tilt) with &plusmn;0.15 gust floor &middot; force at the panel mid-depth centroid &middot; slide-outs add area, not lever &middot; steep dawn/dusk angles are worst case &mdash; stow flat in storms. * on a load = actuator in tension (wind under the leeward wing). Axial wind (nose/rear) carries no cross pressure &mdash; gust floor only; quartering winds carry half. Live wind via Open-Meteo at the set site, uses gust speed, direction resolved against nose heading automatically.</p>
+  <div class="toggles" style="margin:12px 0 8px;border-top:1px solid var(--line);padding-top:10px;">
+    <b>Hinge line</b>
+    <label><input type="radio" name="hgT" id="hgCont" checked> Continuous</label>
+    <label><input type="radio" name="hgT" id="hgSect"> Discrete <input type="number" id="hgN" value="4" min="1" max="24" step="1" style="width:40px;"> hinges</label>
+    <label>Capacity / wing <input type="number" id="hgCap" value="25" min="1" step="1" style="width:56px;"> <select id="hgUnit"><option value="in">lb/in</option><option value="hinge">lb per hinge</option><option value="total">lb total</option></select></label>
+  </div>
+  <div class="orow"><span class="nm">Hinge &middot; at current angle &amp; wind</span><span class="w"><span id="hgNow">0</span><small> lb</small></span><span class="e" id="hgNowD">&mdash;</span></div>
+  <div class="orow"><span class="nm">Hinge &middot; peak over travel, dead load</span><span class="w"><span id="hgStat">0</span><small> lb</small></span><span class="e" id="hgStatD">&mdash;</span></div>
+  <div class="orow"><span class="nm">Hinge &middot; peak over travel, current wind</span><span class="w"><span id="hgMax">0</span><small> lb</small></span><span class="e" id="hgMaxD">&mdash;</span></div>
+  <div class="orow"><span class="nm">Stow above &middot; actuator or hinge</span><span class="w" id="hgStow">&gt;120 mph</span><span class="e" id="hgGov">&mdash;</span></div>
+  <p class="cap">The two <b>peak over travel</b> rows are the envelope across the full 15&ndash;165&deg; sweep, so they hold steady as the wing tracks; the top row is the live value at the current angle. Wind amplifies the reaction through the actuator plus its own drag &mdash; compare the dead-load peak to the current-wind peak to see the amplification. <b>Stow above</b> is the wind speed where either the actuator rating or the hinge capacity is first reached over the travel, whichever comes first &mdash; use it as the stow trigger, not just the actuator limit. Capacity is per wing &mdash; enter it as lb per inch (continuous), lb per hinge, or a total lb rating (e.g. gate hinges sold and rated as a set: 4 hinges at 1,100 lb per pair = 2,200 lb total). Load is distributed over the fixed-panel span (count &times; panel width); flat-panel uplift isn&rsquo;t modeled; steep angles govern.</p>
 </div>
 
 <div class="card" id="outCard">
@@ -450,6 +461,7 @@ function powerCalc(s,tD,tP,sr,sd,sp,active){
  return (roof+w(-1,tD,sd,cfg.nD,cfg.pD,have.d,sh.d)+w(1,tP,sp,cfg.nP,cfg.pP,have.p,sh.p))*f;
 }
 let wD=200, wP=200, armA=18.7, armB=64.4, aRet=46.6, aExt=82.6, rating=500, suggA=0, suggB=0, windV=0, windSel='1', liveDir=null;
+let hgCont=true, hgN=4, hgCap=25, hgUnit='in';
 function Lact(t){return Math.sqrt(armA*armA+armB*armB-2*armA*armB*Math.cos(t*D2R));}
 function wingArea(n,sl){return (n+2*sl)*wingWid*wingDep/144;}
 function getK(){
@@ -476,6 +488,17 @@ function windLimit(tD,tP,AD,AP,hd,hp){
  for(let V=1;V<=120;V+=1){windV=V;
   if((hd&&loadW(tD,wD,-1,AD).f>=rating)||(hp&&loadW(tP,wP,1,AP).f>=rating)){lim=V;break;}}
  windV=sv;return lim;}
+function hingeR(t,W,sgn,A){
+ if(t<0.5)t=0.5;
+ const tR=t*D2R, L=Lact(t);
+ const Fa=2*loadW(t,W,sgn,A).f;
+ const ux=armB*Math.sin(tR)/L, uy=(armA-armB*Math.cos(tR))/L;
+ const k=getK(); let cc=k*k; if(cc<0.15)cc=0.15;
+ const Fh=0.00256*windV*windV*A*1.3*cc*Math.abs(Math.cos(tR)), G=W;
+ let best=0;
+ for(const ws of [1,-1]){const Rx=-(ws*Fh+Fa*ux), Ry=-(-G+Fa*uy); const R=Math.hypot(Rx,Ry); if(R>best)best=R;}
+ return best;
+}
 function reachRng(){const S=armA*armA+armB*armB,P=2*armA*armB;
  const lo=Math.acos(Math.max(-1,Math.min(1,(S-aRet*aRet)/P)))/D2R;
  const hi=Math.acos(Math.max(-1,Math.min(1,(S-aExt*aExt)/P)))/D2R;
@@ -596,6 +619,40 @@ function frame(ts){
  $('wTP').textContent=windV>0&&wf>0.02&&have.p?dirTxt(cWP):'\u2014';
  $('sD').textContent=sf.d>0.98?'slides out':(sf.d>0.02?'slides moving':'slides in');
  $('sP').textContent=sf.p>0.98?'slides out':(sf.p>0.02?'slides moving':'slides in');
+ (function(){
+  const thr=(n)=>hgUnit==='total'?hgCap:(hgUnit==='hinge'?hgCap*hgN:hgCap*Math.max(1,n*wingWid));
+  const peak=(useWind)=>{const sv=windV; if(!useWind)windV=0; let b={R:0,a:0,n:cfg.nD,wing:'driver'};
+   if(have.d)for(let t=15;t<=165;t+=2){const R=hingeR(t,wD,-1,AD);if(R>b.R)b={R,a:t,n:cfg.nD,wing:'driver'};}
+   if(have.p)for(let t=15;t<=165;t+=2){const R=hingeR(t,wP,1,AP);if(R>b.R)b={R,a:t,n:cfg.nP,wing:'passenger'};}
+   windV=sv; return b;};
+  const rNowD=have.d&&wf>0.02?hingeR(tD,wD,-1,AD):0, rNowP=have.p&&wf>0.02?hingeR(tP,wP,1,AP):0;
+  const now=rNowD>=rNowP?{R:rNowD,n:cfg.nD,wing:'driver',a:tD}:{R:rNowP,n:cfg.nP,wing:'passenger',a:tP};
+  const pStat=peak(false), pWind=peak(true);
+  const span=n=>Math.max(1,n*wingWid);
+  const dist=(R,n)=>hgCont?(R/span(n)).toFixed(1)+' lb/in':Math.round(R/hgN)+' lb/hinge';
+  const put=(id,dd,o,tag)=>{$(id).textContent=Math.round(o.R);
+   $(dd).textContent=o.R>0?dist(o.R,o.n)+(o.a?' @ '+Math.round(o.a)+'\u00B0':'')+(tag&&o.wing?' \u00B7 '+o.wing:''):'\u2014';};
+  put('hgNow','hgNowD',now,true);
+  put('hgStat','hgStatD',pStat,false);
+  put('hgMax','hgMaxD',pWind,true);
+  const lim=(function(){const sv=windV;let aL=999,hL=999;
+   for(let V=2;V<=120;V+=2){windV=V;
+    if(aL===999){let hit=false;
+     if(have.d)for(let t=15;t<=165;t+=5){if(loadW(t,wD,-1,AD).f>=rating){hit=true;break;}}
+     if(!hit&&have.p)for(let t=15;t<=165;t+=5){if(loadW(t,wP,1,AP).f>=rating){hit=true;break;}}
+     if(hit)aL=V;}
+    if(hL===999){let hit=false;
+     if(have.d)for(let t=15;t<=165;t+=5){if(hingeR(t,wD,-1,AD)>=thr(cfg.nD)){hit=true;break;}}
+     if(!hit&&have.p)for(let t=15;t<=165;t+=5){if(hingeR(t,wP,1,AP)>=thr(cfg.nP)){hit=true;break;}}
+     if(hit)hL=V;}
+    if(aL<999&&hL<999)break;}
+   windV=sv;return {a:aL,h:hL};})();
+  const stow=Math.min(lim.a,lim.h), stEl=$('hgStow');
+  stEl.textContent=stow>120?'>120 mph':stow+' mph';
+  stEl.style.color=stow<=25?'#e25555':(stow<=45?'#f2a121':'#2dbd8a');
+  const gov=lim.h<lim.a?'hinge governs':(lim.a<lim.h?'actuator governs':'both');
+  $('hgGov').textContent=(lim.a>120&&lim.h>120)?'both >120 mph':('hinge '+(lim.h>120?'>120':lim.h)+' / act '+(lim.a>120?'>120':lim.a)+' \u00B7 '+gov);
+ })();
 
  const tl=fmtT(T);
  $('Tv').textContent=tl; $('Tv2').textContent=tl;
@@ -731,6 +788,11 @@ async function fetchWind(){
 }
 $('bWind').onclick=fetchWind;
 $('inRate').oninput=e=>{rating=Math.max(50,+e.target.value||500);$('hdrRt').textContent=rating;updateSugg();};
+$('hgCont').onchange=()=>{hgCont=true;if(hgUnit!=='in'){hgUnit='in';$('hgUnit').value='in';}};
+$('hgSect').onchange=()=>{hgCont=false;if(hgUnit==='in'){hgUnit='total';$('hgUnit').value='total';}};
+$('hgN').oninput=e=>{hgN=Math.max(1,Math.min(24,+e.target.value||4));};
+$('hgCap').oninput=e=>{hgCap=Math.max(1,+e.target.value||25);};
+$('hgUnit').onchange=e=>{hgUnit=e.target.value;};
 $('bApply').onclick=()=>{if(suggA>0){armA=suggA;armB=suggB;$('armA').value=suggA;$('armB').value=suggB;}};
 function cfgIn(id,key,lo,hi){$(id).oninput=e=>{cfg[key]=Math.min(hi,Math.max(lo,Math.round(+e.target.value||lo)));refreshEnergy();};}
 cfgIn('cntR','nR',1,8); cfgIn('watR','pR',10,1000);
